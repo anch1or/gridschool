@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridSchool — репетитор по математике</title>
+<style>
+/* ============================================================
+   CSS-переменные и базовые стили
+   ============================================================ */
+:root{
+  --bg:#f4f6fb;
+  --bg-grid:#e8ecf5;
+  --card:#ffffff;
+  --line:#dde3ee;
+  --text:#1f2a3d;
+  --muted:#6b7789;
+  --accent:#3b6ef5;
+  --accent-soft:#e8efff;
+  --ok:#1fa971;
+  --ok-soft:#e2f6ee;
+  --warn:#d9911a;
+  --warn-soft:#fdf3e0;
+  --bad:#d64545;
+  --bad-soft:#fbe7e7;
+  --radius:14px;
+  --shadow:0 4px 18px rgba(31,42,61,.07);
+  --shadow-sm:0 2px 8px rgba(31,42,61,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:15px;
+  line-height:1.45;
+  min-height:100vh;
+  /* лейтмотив GridSchool — сетка на фоне */
+  background-image:
+    linear-gradient(var(--bg-grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--bg-grid) 1px,transparent 1px);
+  background-size:32px 32px;
+}
+button{font-family:inherit;font-size:14px;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:14px}
+a{color:var(--accent);text-decoration:none}
+h1,h2,h3,h4{margin:0 0 10px;line-height:1.25}
+h1{font-size:22px}
+h2{font-size:18px}
+h3{font-size:15px}
+p{margin:0 0 10px}
+
+/* ============================================================
+   Общие компоненты
+   ============================================================ */
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);
+  padding:16px;
+}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.tiny{font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.grid{display:grid;gap:16px}
+.btn{
+  border:1px solid var(--line);
+  background:var(--card);
+  color:var(--text);
+  border-radius:10px;
+  padding:8px 14px;
+  transition:.15s;
+}
+.btn:hover{background:#f0f4ff;border-color:#c9d6f5}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#2f5fe0}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.ok:hover{background:#189060}
+.btn.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.bad:hover{background:#c23a3a}
+.btn.ghost{background:transparent}
+.btn.sm{padding:4px 9px;font-size:12px;border-radius:8px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+input,select,textarea{
+  width:100%;
+  padding:8px 10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fff;
+  color:var(--text);
+  outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.field{margin-bottom:12px}
+textarea{resize:vertical;min-height:70px}
+
+/* KPI */
+.kpi{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px;box-shadow:var(--shadow-sm);
+}
+.kpi .num{font-size:26px;font-weight:700;letter-spacing:-.5px}
+.kpi .lbl{color:var(--muted);font-size:13px;margin-top:2px}
+
+/* Пилюли статусов */
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600}
+.pill.planned{background:var(--accent-soft);color:var(--accent)}
+.pill.done{background:var(--ok-soft);color:var(--ok)}
+.pill.moved{background:var(--warn-soft);color:var(--warn)}
+.pill.cancel{background:var(--bad-soft);color:var(--bad)}
+
+/* Прогресс-бар */
+.progress{background:#eef2f9;border-radius:999px;height:8px;overflow:hidden}
+.progress > div{height:100%;background:var(--accent);border-radius:999px;transition:width .3s}
+
+/* Таблицы */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+tbody tr:hover{background:#f7f9ff}
+
+/* ============================================================
+   Экран входа
+   ============================================================ */
+#loginScreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.login-wrap{width:100%;max-width:420px}
+.brand{text-align:center;margin-bottom:18px}
+.brand .logo{
+  display:inline-flex;align-items:center;gap:10px;font-weight:800;font-size:24px;
+  letter-spacing:-.5px;
+}
+.brand .logo .mark{
+  width:38px;height:38px;border-radius:11px;background:var(--accent);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;font-size:20px;
+  box-shadow:0 4px 12px rgba(59,110,245,.35);
+}
+.brand .sub{color:var(--muted);font-size:13px;margin-top:6px}
+.login-card{padding:22px}
+.demo-btns{display:grid;gap:8px;margin-top:6px}
+.about{margin-top:18px;font-size:13px;color:var(--muted);text-align:center;line-height:1.5}
+
+/* ============================================================
+   Каркас приложения
+   ============================================================ */
+#app{display:none}
+.topbar{
+  position:sticky;top:0;z-index:20;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+  padding:10px 18px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.topbar .logo{display:flex;align-items:center;gap:9px;font-weight:800}
+.topbar .logo .mark{
+  width:30px;height:30px;border-radius:9px;background:var(--accent);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;font-size:16px;
+}
+.role-badge{
+  background:var(--accent-soft);color:var(--accent);border-radius:999px;
+  padding:3px 11px;font-size:12px;font-weight:700;
+}
+.topbar .spacer{flex:1}
+.topbar .who{font-size:13px;color:var(--muted)}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 18px 0}
+.tab{
+  border:none;background:transparent;color:var(--muted);
+  padding:8px 14px;border-radius:10px 10px 0 0;font-weight:600;font-size:14px;
+}
+.tab:hover{background:#eef2fb;color:var(--text)}
+.tab.active{background:var(--card);color:var(--accent);box-shadow:var(--shadow-sm)}
+.content{padding:16px 18px 40px;max-width:1200px;margin:0 auto}
+.view{display:none}
+.view.active{display:block}
+
+/* ============================================================
+   Календарь
+   ============================================================ */
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.cal-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:6px;
+}
+.cal-dow{
+  text-align:center;font-size:12px;color:var(--muted);font-weight:600;padding:4px 0;
+}
+.cal-cell{
+  min-height:96px;background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:6px;font-size:12px;position:relative;overflow:hidden;
+}
+.cal-cell.other{background:#f7f9fe;color:#aab4c4}
+.cal-cell.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.cal-cell .dnum{font-weight:700;font-size:13px;margin-bottom:3px}
+.cal-lesson{
+  display:block;width:100%;text-align:left;border:none;border-radius:6px;
+  padding:2px 5px;margin:2px 0;font-size:11px;font-weight:600;cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.cal-lesson.planned{background:var(--accent-soft);color:var(--accent)}
+.cal-lesson.done{background:var(--ok-soft);color:var(--ok)}
+.cal-lesson.moved{background:var(--warn-soft);color:var(--warn)}
+.cal-lesson.cancel{background:var(--bad-soft);color:var(--bad);text-decoration:line-through}
+
+/* ============================================================
+   Модальные окна
+   ============================================================ */
+.overlay{
+  position:fixed;inset:0;background:rgba(20,30,50,.45);
+  display:none;align-items:center;justify-content:center;padding:18px;z-index:50;
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--card);border-radius:16px;box-shadow:0 20px 60px rgba(20,30,50,.25);
+  width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;
+  animation:pop .18s ease-out;
+}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{
+  padding:16px 18px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.modal-body{padding:18px;overflow-y:auto}
+.modal-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+.xbtn{border:none;background:#eef2fb;border-radius:9px;width:32px;height:32px;font-size:16px;color:var(--muted)}
+.xbtn:hover{background:#e2e8f7;color:var(--text)}
+
+/* ============================================================
+   Тосты
+   ============================================================ */
+#toasts{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{
+  background:#1f2a3d;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;
+  box-shadow:0 8px 24px rgba(20,30,50,.3);animation:up .25s ease-out;
+}
+@keyframes up{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ============================================================
+   Бар-чарт (CSS)
+   ============================================================ */
+.chart{display:flex;gap:14px;align-items:flex-end;height:180px;padding:10px 4px 0;border-bottom:1px solid var(--line)}
+.chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.chart .bars{display:flex;gap:4px;align-items:flex-end;height:100%;width:100%;justify-content:center}
+.chart .bar{width:14px;border-radius:4px 4px 0 0;min-height:2px;transition:height .4s}
+.chart .bar.received{background:var(--accent)}
+.chart .bar.forecast{background:var(--ok)}
+.chart .clabel{font-size:11px;color:var(--muted);white-space:nowrap}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+
+/* ============================================================
+   Адаптивность
+   ============================================================ */
+@media (max-width:820px){
+  .content{padding:12px 12px 40px}
+  .topbar{padding:8px 12px}
+  .tabs{padding:10px 12px 0}
+  .cal-cell{min-height:74px;padding:4px;font-size:11px}
+  .cal-lesson{font-size:10px}
+  .kpi .num{font-size:22px}
+}
+@media (max-width:560px){
+  .grid{grid-template-columns:1fr !important}
+  .cal-grid{grid-template-columns:repeat(7,1fr);gap:3px}
+  .cal-cell{min-height:58px;border-radius:7px;padding:3px}
+  .cal-cell .dnum{font-size:11px}
+  .cal-lesson{padding:1px 3px;font-size:9px}
+  .chart{height:140px}
+  .chart .bar{width:9px}
+  table{font-size:12px}
+  th,td{padding:6px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ЭКРАН ВХОДА (публичная часть)
+     ============================================================ -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="brand">
+      <div class="logo"><span class="mark">∑</span> GridSchool</div>
+      <div class="sub">Репетитор по математике · учёт, расписание, кабинеты</div>
+    </div>
+
+    <div class="card login-card">
+      <h2 style="margin-bottom:14px">Вход</h2>
+      <form id="loginForm" autocomplete="off">
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input id="loginEmail" type="email" placeholder="tutor@gridschool.ru" required>
+        </div>
+        <div class="field">
+          <label for="loginPass">Пароль</label>
+          <input id="loginPass" type="password" placeholder="demo" required>
+        </div>
+        <button class="btn primary" type="submit" style="width:100%">Войти</button>
+      </form>
+
+      <div style="margin:16px 0 6px" class="muted small">Демо-вход в один клик:</div>
+      <div class="demo-btns">
+        <button class="btn" data-demo="tutor@gridschool.ru">👩‍🏫 Репетитор</button>
+        <button class="btn" data-demo="parent@gridschool.ru">👨‍👧 Родитель</button>
+        <button class="btn" data-demo="student@gridschool.ru">🧑‍🎓 Ученик</button>
+      </div>
+    </div>
+
+    <div class="about">
+      <strong>О платформе.</strong> GridSchool — прототип личного кабинета репетитора:
+      расписание, абонементы, оплаты, домашние задания и связь с родителями.
+      Все данные хранятся локально в вашем браузере (localStorage) и никуда не отправляются.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ПРИЛОЖЕНИЕ (после входа)
+     ============================================================ -->
+<div id="app">
+  <div class="topbar">
+    <div class="logo"><span class="mark">∑</span> GridSchool</div>
+    <span class="role-badge" id="roleBadge">—</span>
+    <div class="spacer"></div>
+    <span class="who" id="whoLabel"></span>
+    <button class="btn sm" id="btnExport" title="Скачать все данные в JSON">⤓ Экспорт</button>
+    <button class="btn sm" id="btnImport" title="Загрузить данные из JSON">⤒ Импорт</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none">
+    <button class="btn sm bad" id="btnLogout">Выйти</button>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="content" id="content"></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Окно</h3>
+      <button class="xbtn" id="modalClose" title="Закрыть (Esc)">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* ============================================================
+   УТИЛИТЫ
+   ============================================================ */
+const $  = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+let idSeq = 1000;
+function uid(prefix='id'){ idSeq++; return prefix + '_' + Date.now().toString(36) + '_' + idSeq; }
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function todayStr(d=new Date()){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function monthKey(dateStr){ return (dateStr||'').slice(0,7); }
+function fmtDate(dateStr){
+  if(!dateStr) return '—';
+  const [y,m,d] = dateStr.split('-');
+  return d+'.'+m+'.'+y;
+}
+function fmtMoney(n){ return (Math.round(n)||0).toLocaleString('ru-RU') + ' ₽'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function monthName(m){ // m: 0..11
+  return ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][m];
+}
+function addMonths(y,m,delta){
+  let total = y*12+m+delta;
+  return { y: Math.floor(total/12), m: ((total%12)+12)%12 };
+}
+function lastDay(y,m){ return new Date(y, m+1, 0).getDate(); }
+
+/* Тосты */
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  $('#toasts').appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; }, 2200);
+  setTimeout(()=>t.remove(), 2600);
+}
+
+/* ============================================================
+   SEED — демо-данные
+   ============================================================ */
+const LS_KEY = 'gridschool_db_v1';
+
+function seedDB(){
+  const now = new Date();
+  const Y = now.getFullYear();
+  const M = now.getMonth();
+  const thisMonth = pad(M+1);
+  const prev = addMonths(Y, M, -1);
+  const prevMonth = pad(prev.m+1);
+
+  const d = (y,m,day) => y+'-'+pad(m+1)+'-'+pad(day);
+  const tStr = (h,mi) => pad(h)+':'+pad(mi);
+
+  const users = [
+    { id:'u_tutor', email:'tutor@gridschool.ru', pass:'demo', role:'TUTOR', name:'Анна Сергеевна' },
+    { id:'u_parent1', email:'parent@gridschool.ru', pass:'demo', role:'PARENT', name:'Ольга Иванова', studentId:'s_1' },
+    { id:'u_student1', email:'student@gridschool.ru', pass:'demo', role:'STUDENT', name:'Миша Иванов', studentId:'s_1' },
+    { id:'u_parent2', email:'parent2@gridschool.ru', pass:'demo', role:'PARENT', name:'Дмитрий Петров', studentId:'s_2' },
+    { id:'u_student2', email:'student2@gridschool.ru', pass:'demo', role:'STUDENT', name:'Соня Петрова', studentId:'s_2' },
+    { id:'u_parent3', email:'parent3@gridschool.ru', pass:'demo', role:'PARENT', name:'Елена Смирнова', studentId:'s_3' },
+    { id:'u_student3', email:'student3@gridschool.ru', pass:'demo', role:'STUDENT', name:'Артём Смирнов', studentId:'s_3' }
+  ];
+
+  const students = [
+    { id:'s_1', name:'Миша Иванов', grade:'7 класс', parentId:'u_parent1', parentName:'Ольга Иванова',
+      cost:1800, mode:'subscription', freq:'Пн, Ср 16:00', duration:60,
+      balance:6, paidLessons:10, totalLessons:10,
+      note:'Сильный ученик, любит задачи на логику. Нужно подтянуть геометрию.',
+      text:'Миша, отличная работа с уравнениями! На этой неделе focus на геометрии — площади фигур.' },
+    { id:'s_2', name:'Соня Петрова', grade:'9 класс', parentId:'u_parent2', parentName:'Дмитрий Петров',
+      cost:2000, mode:'perLesson', freq:'Вт, Чт 18:00', duration:60,
+      balance:0, paidLessons:0, totalLessons:0,
+      note:'Готовимся к ОГЭ. Обратить внимание на задачи с параметром.',
+      text:'Соня, не забывай про пробный вариант ОГЭ — разберём ошибки на следующем занятии.' },
+    { id:'s_3', name:'Артём Смирнов', grade:'5 класс', parentId:'u_parent3', parentName:'Елена Смирнова',
+      cost:1500, mode:'subscription', freq:'Сб 11:00', duration:45,
+      balance:2, paidLessons:6, totalLessons:4,
+      note:'Нужен более медленный темп, больше игровых задач.',
+      text:'Артём, ты молодец! Продолжаем тренировать таблицу умножения.' }
+  ];
+
+  const lessons = [
+    // текущий месяц — проведённые
+    { id:'l_1', studentId:'s_1', date:d(Y,M,Math.max(1,now.getDate()-5)), time:'16:00', duration:60, status:'done' },
+    { id:'l_2', studentId:'s_1', date:d(Y,M,Math.max(1,now.getDate()-3)), time:'16:00', duration:60, status:'done' },
+    { id:'l_3', studentId:'s_2', date:d(Y,M,Math.max(1,now.getDate()-2)), time:'18:00', duration:60, status:'done' },
+    // текущий месяц — запланированные
+    { id:'l_4', studentId:'s_1', date:d(Y,M,Math.min(28,now.getDate()+2)), time:'16:00', duration:60, status:'planned' },
+    { id:'l_5', studentId:'s_2', date:d(Y,M,Math.min(28,now.getDate()+3)), time:'18:00', duration:60, status:'planned' },
+    { id:'l_6', studentId:'s_3', date:d(Y,M,Math.min(28,now.getDate()+4)), time:'11:00', duration:45, status:'planned' },
+    { id:'l_7', studentId:'s_1', date:todayStr(now), time:'16:00', duration:60, status:'planned' },
+    // прошлый месяц
+    { id:'l_8', studentId:'s_1', date:d(prev.y,prev.m,10), time:'16:00', duration:60, status:'done' },
+    { id:'l_9', studentId:'s_2', date:d(prev.y,prev.m,12), time:'18:00', duration:60, status:'done' },
+    { id:'l_10', studentId:'s_3', date:d(prev.y,prev.m,15), time:'11:00', duration:45, status:'done' },
+    // перенесённое
+    { id:'l_11', studentId:'s_1', date:d(Y,M,Math.min(28,now.getDate()+6)), time:'16:00', duration:60, status:'moved' }
+  ];
+
+  const payments = [
+    { id:'p_1', studentId:'s_1', date:d(Y,M,2), amount:18000, method:'Перевод', comment:'Абонемент на 10 занятий' },
+    { id:'p_2', studentId:'s_2', date:d(Y,M,3), amount:2000, method:'Карта', comment:'Поурочная оплата' },
+    { id:'p_3', studentId:'s_3', date:d(prev.y,prev.m,20), amount:9000, method:'Наличные', comment:'Абонемент на 6 занятий' }
+  ];
+
+  const homework = [
+    { id:'h_1', studentId:'s_1', title:'Уравнения, вариант 3', due:d(Y,M,Math.min(28,now.getDate()+3)), done:false, url:'' },
+    { id:'h_2', studentId:'s_2', title:'Пробный вариант ОГЭ №2', due:d(Y,M,Math.min(28,now.getDate()+4)), done:false, url:'' },
+    { id:'h_3', studentId:'s_3', title:'Таблица умножения — карточки', due:d(Y,M,Math.min(28,now.getDate()+2)), done:true, url:'' }
+  ];
+
+  const materials = [
+    { id:'m_1', studentId:'s_1', title:'Конференция (Zoom)', url:'https://example.com/zoom-ivanov', type:'conf' },
+    { id:'m_2', studentId:'s_1', title:'Онлайн-доска', url:'https://example.com/board-ivanov', type:'board' },
+    { id:'m_3', studentId:'s_2', title:'Конференция (Meet)', url:'https://example.com/meet-petrova', type:'conf' },
+    { id:'m_4', studentId:'s_3', title:'Онлайн-доска', url:'https://example.com/board-smirnov', type:'board' }
+  ];
+
+  const reschedules = [
+    { id:'r_1', lessonId:'l_11',
+      from:d(Y,M,Math.min(28,now.getDate()+1))+' 16:00',
+      to:d(Y,M,Math.min(28,now.getDate()+6))+' 16:00',
+      reason:'Болезнь ученика' }
+  ];
+
+  return {
+    users, students, lessons, payments, homework, materials, reschedules,
+    session: null,
+    meta: { createdAt: new Date().toISOString(), version: 1 }
+  };
+}
+
+/* ============================================================
+   STORE — чтение/запись localStorage
+   ============================================================ */
+let DB = null;
+
+function load(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      DB = JSON.parse(raw);
+      // минимальная нормализация
+      DB.users = DB.users||[]; DB.students = DB.students||[];
+      DB.lessons = DB.lessons||[]; DB.payments = DB.payments||[];
+      DB.homework = DB.homework||[]; DB.materials = DB.materials||[];
+      DB.reschedules = DB.reschedules||[]; DB.session = DB.session||null;
+      return;
+    }
+  }catch(e){ console.warn('Ошибка чтения localStorage', e); }
+  DB = seedDB();
+  save();
+}
+
+function save(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }
+  catch(e){ console.warn('Ошибка сохранения', e); toast('Не удалось сохранить данные'); }
+}
+
+/* Сброс до демо-данных (доступен из консоли) */
+function resetDB(){
+  DB = seedDB();
+  save();
+  if(DB.session){} // сессия сброшена — нужно перелогиниться
+  renderAll();
+  toast('Данные сброшены до демо');
+}
+window.resetDB = resetDB;
+
+/* ============================================================
+   AUTH — авторизация и роли
+   ============================================================ */
+function currentUser(){
+  if(!DB || !DB.session) return null;
+  return DB.users.find(u => u.id === DB.session) || null;
+}
+function login(email, pass){
+  const u = DB.users.find(x => x.email.toLowerCase() === String(email).toLowerCase().trim());
+  if(!u || u.pass !== pass){ toast('Неверный email или пароль'); return false; }
+  DB.session = u.id;
+  save();
+  renderAll();
+  toast('Добро пожаловать, ' + u.name);
+  return true;
+}
+function logout(){
+  DB.session = null;
+  save();
+  renderAll();
+}
+function roleLabel(role){
+  return { TUTOR:'Репетитор', PARENT:'Родитель', STUDENT:'Ученик' }[role] || role;
+}
+
+/* Доступ: репетитор видит всё; родитель/ученик — только своего studentId */
+function visibleStudents(){
+  const u = currentUser();
+  if(!u) return [];
+  if(u.role === 'TUTOR') return DB.students;
+  return DB.students.filter(s => s.id === u.studentId);
+}
+function canSeeStudent(studentId){
+  const u = currentUser();
+  if(!u) return false;
+  if(u.role === 'TUTOR') return true;
+  return u.studentId === studentId;
+}
+
+/* ============================================================
+   ДОМЕННЫЕ ХЕЛПЕРЫ
+   ============================================================ */
+function studentById(id){ return DB.students.find(s => s.id === id); }
+function studentName(id){ const s = studentById(id); return s ? s.name : '—'; }
+function lessonsOf(studentId){ return DB.lessons.filter(l => l.studentId === studentId); }
+function paymentsOf(studentId){ return DB.payments.filter(p => p.studentId === studentId); }
+function homeworkOf(studentId){ return DB.homework.filter(h => h.studentId === studentId); }
+function materialsOf(studentId){ return DB.materials.filter(m => m.studentId === studentId); }
+
+function paidTotal(studentId){
+  return paymentsOf(studentId).reduce((sum,p)=>sum + Number(p.amount||0), 0);
+}
+function doneCount(studentId){
+  return lessonsOf(studentId).filter(l => l.status === 'done').length;
+}
+function plannedCount(studentId){
+  return lessonsOf(studentId).filter(l => l.status === 'planned').length;
+}
+/* Долг по поурочным: max(0, проведено × cost − оплачено) */
+function debtPerLesson(student){
+  if(student.mode !== 'perLesson') return 0;
+  return Math.max(0, doneCount(student.id) * student.cost - paidTotal(student.id));
+}
+
+/* Месячные агрегаты */
+function lessonsInMonth(y,m){
+  const key = y+'-'+pad(m+1);
+  return DB.lessons.filter(l => monthKey(l.date) === key);
+}
+function paymentsInMonth(y,m){
+  const key = y+'-'+pad(m+1);
+  return DB.payments.filter(p => monthKey(p.date) === key);
+}
+
+/* ============================================================
+   ВХОД / ВЫХОД В UI
+   ============================================================ */
+function renderAll(){
+  const u = currentUser();
+  if(!u){
+    $('#loginScreen').style.display = 'flex';
+    $('#app').style.display = 'none';
+    closeModal();
+    return;
+  }
+  $('#loginScreen').style.display = 'none';
+  $('#app').style.display = 'block';
+  $('#roleBadge').textContent = roleLabel(u.role);
+  $('#whoLabel').textContent = u.name;
+  renderTabs();
+  renderActiveView();
+}
+
+/* Набор вкладок по роли */
+function tabsForRole(role){
+  if(role === 'TUTOR'){
+    return [
+      { id:'dashboard', label:'Дашборд' },
+      { id:'schedule',  label:'Расписание' },
+      { id:'students',  label:'Ученики' },
+      { id:'finance',   label:'Бухгалтерия' },
+      { id:'forecast',  label:'Прогноз' }
+    ];
+  }
+  if(role === 'PARENT'){
+    return [{ id:'parent', label:'Кабинет родителя' }];
+  }
+  return [{ id:'student', label:'Кабинет ученика' }];
+}
+
+let activeTab = null;
+function renderTabs(){
+  const u = currentUser();
+  if(!u) return;
+  const tabs = tabsForRole(u.role);
+  if(!activeTab || !tabs.some(t => t.id === activeTab)){
+    activeTab = tabs[0].id;
+  }
+  const wrap = $('#tabs');
+  wrap.innerHTML = '';
+  tabs.forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'tab' + (t.id === activeTab ? ' active' : '');
+    b.textContent = t.label;
+    b.onclick = () => { activeTab = t.id; renderTabs(); renderActiveView(); };
+    wrap.appendChild(b);
+  });
+}
+
+function renderActiveView(){
+  const u = currentUser();
+  if(!u) return;
+  const content = $('#content');
+  if(activeTab === 'dashboard') renderDashboard(content);
+  else if(activeTab === 'schedule') renderSchedule(content);
+  else if(activeTab === 'students') renderStudents(content);
+  else if(activeTab === 'finance') renderFinance(content);
+  else if(activeTab === 'forecast') renderForecast(content);
+  else if(activeTab === 'parent') renderParentCabinet(content);
+  else if(activeTab === 'student') renderStudentCabinet(content);
+}
+
+/* ============================================================
+   VIEWS: ДАШБОРД (репетитор)
+   ============================================================ */
+function renderDashboard(root){
+  const now = new Date();
+  const Y = now.getFullYear(), M = now.getMonth();
+  const mLessons = lessonsInMonth(Y,M);
+  const doneLessons = mLessons.filter(l => l.status === 'done').length;
+  const earned = mLessons.filter(l => l.status === 'done').reduce((s,l)=>{
+    const st = studentById(l.studentId);
+    return s + (st ? st.cost : 0);
+  }, 0);
+  const plannedIncome = mLessons.filter(l => l.status === 'planned').reduce((s,l)=>{
+    const st = studentById(l.studentId);
+    return s + (st ? st.cost : 0);
+  }, 0);
+  const monthPayments = paymentsInMonth(Y,M).reduce((s,p)=>s + Number(p.amount||0), 0);
+
+  const today = todayStr();
+  const todayLessons = DB.lessons
+    .filter(l => l.date === today && l.status !== 'cancel')
+    .sort((a,b)=>a.time.localeCompare(b.time));
+
+  const lowBalance = DB.students.filter(s => s.mode === 'subscription' && s.balance <= 2);
+
+  root.innerHTML = `
+    <div class="spread" style="margin-bottom:16px">
+      <h1>Дашборд</h1>
+      <span class="muted small">${monthName(M)} ${Y}</span>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+      <div class="kpi"><div class="num">${DB.students.length}</div><div class="lbl">Учеников</div></div>
+      <div class="kpi"><div class="num">${doneLessons}</div><div class="lbl">Занятий за месяц (проведено)</div></div>
+      <div class="kpi"><div class="num">${fmtMoney(earned)}</div><div class="lbl">Заработано за месяц</div></div>
+      <div class="kpi"><div class="num">${fmtMoney(plannedIncome)}</div><div class="lbl">Ожидается (запланировано)</div></div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1.4fr 1fr">
+      <div class="card">
+        <div class="spread" style="margin-bottom:10px">
+          <h2>Занятия сегодня</h2>
+          <span class="muted small">${fmtDate(today)}</span>
+        </div>
+        ${ todayLessons.length ? todayLessons.map(l => {
+          const st = studentById(l.studentId);
+          return `<div class="spread" style="padding:8px 0;border-bottom:1px solid var(--line)">
+            <div><strong>${esc(l.time)}</strong> · ${esc(st ? st.name : '—')}</div>
+            <div class="row">
+              <span class="pill ${l.status}">${statusLabel(l.status)}</span>
+              ${ l.status === 'planned' ? `<button class="btn sm ok" onclick="markDone('${l.id}')">Проведено</button>` : '' }
+            </div>
+          </div>`;
+        }).join('') : '<p class="muted">На сегодня занятий нет</p>' }
+      </div>
+
+      <div class="card">
+        <h2>Скоро закончится абонемент</h2>
+        ${ lowBalance.length ? lowBalance.map(s => `
+          <div class="spread" style="padding:8px 0;border-bottom:1px solid var(--line)">
+            <div>${esc(s.name)} <span class="muted small">· ${esc(s.grade)}</span></div>
+            <div class="pill ${s.balance <= 0 ? 'cancel' : 'moved'}">осталось ${s.balance}</div>
+          </div>
+        `).join('') : '<p class="muted">Все абонементы в порядке</p>' }
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+          <div class="muted small">Получено оплат за месяц</div>
+          <div style="font-size:22px;font-weight:700">${fmtMoney(monthPayments)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function statusLabel(s){
+  return { planned:'Запланировано', done:'Проведено', moved:'Перенесено', cancel:'Отменено' }[s] || s;
+}
+
+/* Отметить занятие проведённым (из любого места) */
+window.markDone = function(lessonId){
+  const l = DB.lessons.find(x => x.id === lessonId);
+  if(!l || l.status === 'done') return;
+  const st = studentById(l.studentId);
+  if(!st) return;
+  l.status = 'done';
+  if(st.mode === 'subscription'){
+    st.balance = Math.max(0, st.balance - 1);
+  }
+  save();
+  renderActiveView();
+  toast('Занятие отмечено проведённым');
+};
+
+/* ============================================================
+   VIEWS: РАСПИСАНИЕ (репетитор)
+   ============================================================ */
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function renderSchedule(root){
+  const now = new Date();
+  const first = new Date(calYear, calMonth, 1);
+  const startDow = (first.getDay() + 6) % 7; // Пн=0
+  const daysInMonth = lastDay(calYear, calMonth);
+
+  // строим ячейки
+  const cells = [];
+  for(let i=0;i<startDow;i++) cells.push(null);
+  for(let d=1; d<=daysInMonth; d++) cells.push(d);
+  while(cells.length % 7 !== 0) cells.push(null);
+
+  const today = todayStr();
+
+  // ближайшие занятия (с сегодняшнего дня, planned, не более 6)
+  const upcoming = DB.lessons
+    .filter(l => l.status === 'planned' && l.date >= today)
+    .sort((a,b)=> (a.date+a.time).localeCompare(b.date+b.time))
+    .slice(0,6);
+
+  // история переносов
+  const history = DB.reschedules.slice().sort((a,b)=> (b.from||'').localeCompare(a.from||'')).slice(0,5);
+
+  root.innerHTML = `
+    <div class="spread" style="margin-bottom:16px">
+      <h1>Расписание</h1>
+      <button class="btn primary" onclick="openLessonModal()">+ Занятие</button>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <div class="cal-head">
+        <div class="row">
+          <button class="btn sm" onclick="calMove(-1)">←</button>
+          <button class="btn sm" onclick="calToday()">Сегодня</button>
+          <button class="btn sm" onclick="calMove(1)">→</button>
+        </div>
+        <h2 style="margin:0">${monthName(calMonth)} ${calYear}</h2>
+        <span class="muted small">${DB.lessons.filter(l=>monthKey(l.date)===calYear+'-'+pad(calMonth+1)).length} занятий</span>
+      </div>
+      <div class="cal-grid">
+        ${['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=>`<div class="cal-dow">${d}</div>`).join('')}
+        ${cells.map(d => {
+          if(!d) return `<div class="cal-cell other"></div>`;
+          const dateStr = calYear+'-'+pad(calMonth+1)+'-'+pad(d);
+          const dayLessons = DB.lessons
+            .filter(l => l.date === dateStr)
+            .sort((a,b)=>a.time.localeCompare(b.time));
+          return `<div class="cal-cell ${dateStr===today?'today':''}">
+            <div class="dnum">${d}</div>
+            ${dayLessons.map(l => {
+              const st = studentById(l.studentId);
+              return `<button class="cal-lesson ${l.status}" title="${esc(st?st.name:'')} ${l.time} — ${statusLabel(l.status)}"
+                onclick="openLessonActions('${l.id}')">${l.time} ${esc(st?st.name.split(' ')[0]:'—')}</button>`;
+            }).join('')}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr">
+      <div class="card">
+        <h2>Ближайшие занятия</h2>
+        ${ upcoming.length ? upcoming.map(l => {
+          const st = studentById(l.studentId);
+          return `<div class="spread" style="padding:8px 0;border-bottom:1px solid var(--line)">
+            <div>${fmtDate(l.date)} <strong>${l.time}</strong> · ${esc(st?st.name:'—')}</div>
+            <button class="btn sm ok" onclick="markDone('${l.id}')">Проведено</button>
+          </div>`;
+        }).join('') : '<p class="muted">Нет запланированных занятий</p>' }
+      </div>
+      <div class="card">
+        <h2>История переносов</h2>
+        ${ history.length ? history.map(r => `
+          <div style="padding:8px 0;border-bottom:1px solid var(--line)">
+            <div class="small"><strong>${esc(studentName((DB.lessons.find(l=>l.id===r.lessonId)||{}).studentId))}</strong></div>
+            <div class="tiny muted">${esc(r.from)} → ${esc(r.to)}</div>
+            <div class="tiny muted">Причина: ${esc(r.reason||'—')}</div>
+          </div>
+        `).join('') : '<p class="muted">Переносов ещё не было</p>' }
+      </div>
+    </div>
+  `;
+}
+
+window.calMove = function(delta){
+  const r = addMonths(calYear, calMonth, delta);
+  calYear = r.y; calMonth = r.m;
+  renderActiveView();
+};
+window.calToday = function(){
+  calYear = new Date().getFullYear();
+  calMonth = new Date().getMonth();
+  renderActiveView();
+};
+
+/* Действия с занятием из календаря */
+window.openLessonActions = function(lessonId){
+  const l = DB.lessons.find(x => x.id === lessonId);
+  if(!l) return;
+  const st = studentById(l.studentId);
+  const body = `
+    <p><strong>${esc(st?st.name:'—')}</strong></p>
+    <p class="small muted">${fmtDate(l.date)} · ${l.time} · ${l.duration} мин · <span class="pill ${l.status}">${statusLabel(l.status)}</span></p>
+    <div class="row" style="margin-top:14px">
+      ${ l.status === 'planned' ? `
+        <button class="btn ok" onclick="markDone('${l.id}');closeModal()">Проведено</button>
+        <button class="btn" onclick="openRescheduleModal('${l.id}')">Перенести</button>
+        <button class="btn bad" onclick="cancelLesson('${l.id}')">Отменить</button>
+      ` : `<p class="muted">Действия доступны только для запланированных занятий.</p>` }
+    </div>
+  `;
+  openModal('Занятие', body, '');
+};
+
+window.cancelLesson = function(lessonId){
+  const l = DB.lessons.find(x => x.id === lessonId);
+  if(!l) return;
+  l.status = 'cancel';
+  save();
+  closeModal();
+  renderActiveView();
+  toast('Занятие отменено');
+};
+
+/* Модалка переноса: сохраняет историю, не списывает абонемент */
+window.openRescheduleModal = function(lessonId){
+  const l = DB.lessons.find(x => x.id === lessonId);
+  if(!l) return;
+  const body = `
+    <div class="field"><label>Новая дата</label><input id="rsDate" type="date" value="${l.date}"></div>
+    <div class="field"><label>Новое время</label><input id="rsTime" type="time" value="${l.time}"></div>
+    <div class="field"><label>Причина</label><input id="rsReason" placeholder="Например, болезнь ученика"></div>
+    <p class="tiny muted">Перенос сохраняется в истории и не списывает занятие из абонемента.</p>
+  `;
+  openModal('Перенести занятие', body, `
+    <button class="btn" onclick="closeModal()">Отмена</button>
+    <button class="btn primary" onclick="confirmReschedule('${lessonId}')">Сохранить перенос</button>
+  `);
+};
+
+window.confirmReschedule = function(lessonId){
+  const l = DB.lessons.find(x => x.id === lessonId);
+  if(!l) return;
+  const newDate = $('#rsDate').value;
+  const newTime = $('#rsTime').value;
+  const reason = $('#rsReason').value.trim();
+  if(!newDate || !newTime){ toast('Укажите дату и время'); return; }
+  const from = l.date + ' ' + l.time;
+  const to = newDate + ' ' + newTime;
+  if(from === to){ toast('Дата и время совпадают'); return; }
+  DB.reschedules.push({ id: uid('r'), lessonId: l.id, from, to, reason });
+  l.date = newDate;
+  l.time = newTime;
+  l.status = 'moved';
+  save();
+  closeModal();
+  renderActiveView();
+  toast('Занятие перенесено');
+};
+
+/* Модалка создания занятия */
+window.openLessonModal = function(){
+  const opts = DB.students.map(s => `<option value="${s.id}">${esc(s.name)} (${esc(s.grade)})</option>`).join('');
+  const body = `
+    <div class="field"><label>Ученик</label><select id="lsStudent">${opts}</select></div>
+    <div class="row">
+      <div class="field" style="flex:1"><label>Дата</label><input id="lsDate" type="date" value="${todayStr()}"></div>
+      <div class="field" style="flex:1"><label>Время</label><input id="lsTime" type="time" value="16:00"></div>
+    </div>
+    <div class="field"><label>Длительность (мин)</label><input id="lsDuration" type="number" value="60" min="15" step="15"></div>
+  `;
+  openModal('Новое занятие', body, `
+    <button class="btn" onclick="closeModal()">Отмена</button>
+    <button class="btn primary" onclick="createLesson()">Добавить</button>
+  `);
+};
+
+window.createLesson = function(){
+  const studentId = $('#lsStudent').value;
+  const date = $('#lsDate').value;
+  const time = $('#lsTime').value;
+  const duration = Number($('#lsDuration').value) || 60;
+  if(!studentId || !date || !time){ toast('Заполните все поля'); return; }
+  DB.lessons.push({ id: uid('l'), studentId, date, time, duration, status:'planned' });
+  save();
+  closeModal();
+  renderActiveView();
+  toast('Занятие добавлено');
+};
+
+/* ============================================================
+   VIEWS: УЧЕНИКИ (репетитор)
+   ============================================================ */
+function renderStudents(root){
+  root.innerHTML = `
+    <div class="spread" style="margin-bottom:16px">
+      <h1>Ученики</h1>
+      <button class="btn primary" onclick="openStudentModal()">+ Ученик</button>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+      ${DB.students.map(s => {
+        const paid = paidTotal(s.id);
+        const done = doneCount(s.id);
+        const planned = plannedCount(s.id);
+        const progress = s.mode === 'subscription'
+          ? Math.round(Math.min(100, (s.balance / Math.max(1, s.totalLessons||10)) * 100))
+          : 0;
+        return `
+          <div class="card">
+            <div class="spread" style="margin-bottom:8px">
+              <div>
+                <strong>${esc(s.name)}</strong>
+                <div class="muted small">${esc(s.grade)} · ${esc(s.freq)}</div>
+              </div>
+              <span class="pill ${s.mode==='subscription'?'planned':'done'}">${s.mode==='subscription'?'Абонемент':'Поурочно'}</span>
+            </div>
+            <div class="small muted" style="margin-bottom:6px">Стоимость: <strong>${fmtMoney(s.cost)}</strong> · ${s.duration} мин</div>
+            ${ s.mode === 'subscription' ? `
+              <div class="small">Остаток: <strong>${s.balance}</strong> из ${s.totalLessons||'—'}</div>
+              <div class="progress" style="margin:6px 0 10px"><div style="width:${progress}%"></div></div>
+            ` : `
+              <div class="small" style="margin-bottom:10px">Долг: <strong style="color:${debtPerLesson(s)>0?'var(--bad)':'var(--ok)'}">${fmtMoney(debtPerLesson(s))}</strong></div>
+            ` }
+            <div class="row small muted" style="margin-bottom:10px">
+              <span>Проведено: ${done}</span><span>·</span><span>Запланировано: ${planned}</span><span>·</span><span>Оплачено: ${fmtMoney(paid)}</span>
+            </div>
+            <button class="btn primary sm" onclick="openStudentCard('${s.id}')">Карточка</button>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+window.openStudentModal = function(){
+  const body = `
+    <div class="field"><label>Имя ученика</label><input id="stName" placeholder="Иван Иванов"></div>
+    <div class="field"><label>Класс</label><input id="stGrade" placeholder="7 класс"></div>
+    <div class="row">
+      <div class="field" style="flex:1"><label>Стоимость (₽)</label><input id="stCost" type="number" value="1800" min="0"></div>
+      <div class="field" style="flex:1"><label>Длительность (мин)</label><input id="stDuration" type="number" value="60" min="15" step="15"></div>
+    </div>
+    <div class="field"><label>Формат</label>
+      <select id="stMode"><option value="subscription">Абонемент</option><option value="perLesson">Поурочно</option></select>
+    </div>
+    <div class="field"><label>Расписание текстом</label><input id="stFreq" placeholder="Пн, Ср 16:00"></div>
+    <div class="field"><label>Имя родителя</label><input id="stParent" placeholder="Ольга Иванова"></div>
+  `;
+  openModal('Новый ученик', body, `
+    <button class="btn" onclick="closeModal()">Отмена</button>
+    <button class="btn primary" onclick="createStudent()">Добавить</button>
+  `);
+};
+
+window.createStudent = function(){
+  const name = $('#stName').value.trim();
+  const grade = $('#stGrade').value.trim();
+  const cost = Number($('#stCost').value)||0;
+  const duration = Number($('#stDuration').value)||60;
+  const mode = $('#stMode').value;
+  const freq = $('#stFreq').value.trim();
+  const parentName = $('#stParent').value.trim();
+  if(!name){ toast('Укажите имя'); return; }
+  DB.students.push({
+    id: uid('s'), name, grade, parentId:null, parentName,
+    cost, mode, freq, duration,
+    balance: mode==='subscription'?0:0,
+    paidLessons:0, totalLessons: mode==='subscription'?10:0,
+    note:'', text:''
+  });
+  save();
+  closeModal();
+  renderActiveView();
+  toast('Ученик добавлен');
+};
+
+/* Карточка ученика — большое модальное окно */
+window.openStudentCard = function(studentId){
+  const s = studentById(studentId);
+  if(!s) return;
+  const done = lessonsOf(s.id).filter(l=>l.status==='done').sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).slice(0,8);
+  const pays = paymentsOf(s.id).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const hw = homeworkOf(s.id);
+  const mats = materialsOf(s.id);
+
+  const body = `
+    <div class="row" style="margin-bottom:14px">
+      <div class="kpi" style="flex:1;padding:10px"><div class="num" style="font-size:20px">${s.mode==='subscription'?s.balance:'—'}</div><div class="lbl">Остаток</div></div>
+      <div class="kpi" style="flex:1;padding:10px"><div class="num" style="font-size:20px">${doneCount(s.id)}</div><div class="lbl">Проведено</div></div>
+      <div class="kpi" style="flex:1;padding:10px"><div class="num" style="font-size:20px">${fmtMoney(paidTotal(s.id))}</div><div class="lbl">Оплачено</div></div>
+      <div class="kpi" style="flex:1;padding:10px"><div class="num" style="font-size:20px">${hw.filter(h=>!h.done).length}</div><div class="lbl">Активных ДЗ</div></div>
+    </div>
+
+    <h3>История занятий (последние 8)</h3>
+    ${ done.length ? done.map(l=>`
+      <div class="spread small" style="padding:5px 0;border-bottom:1px solid var(--line)">
+        <span>${fmtDate(l.date)} · ${l.time}</span><span class="pill done">Проведено</span>
+      </div>`).join('') : '<p class="muted small">Пока нет проведённых занятий</p>' }
+
+    <div class="spread" style="margin:16px 0 6px">
+      <h3 style="margin:0">Оплаты</h3>
+      <button class="btn sm" onclick="openPaymentModal('${s.id}')">+ Оплата</button>
+    </div>
+    ${ pays.length ? pays.map(p=>`
+      <div class="spread small" style="padding:5px 0;border-bottom:1px solid var(--line)">
+        <span>${fmtDate(p.date)} · ${esc(p.method||'—')}</span><strong>${fmtMoney(p.amount)}</strong>
+      </div>`).join('') : '<p class="muted small">Оплат нет</p>' }
+
+    <h3 style="margin-top:16px">Персональный текст для ученика</h3>
+    <textarea id="stText" rows="2">${esc(s.text||'')}</textarea>
+    <button class="btn sm" style="margin-top:6px" onclick="saveStudentText('${s.id}')">Сохранить текст</button>
+
+    <div class="spread" style="margin:16px 0 6px">
+      <h3 style="margin:0">Домашние задания</h3>
+      <button class="btn sm" onclick="openHomeworkModal('${s.id}')">+ ДЗ</button>
+    </div>
+    ${ hw.length ? hw.map(h=>`
+      <div class="spread small" style="padding:5px 0;border-bottom:1px solid var(--line)">
+        <span>${esc(h.title)} <span class="muted">· до ${fmtDate(h.due)}</span></span>
+        <span class="pill ${h.done?'done':'planned'}">${h.done?'Выполнено':'Активно'}</span>
+      </div>`).join('') : '<p class="muted small">ДЗ нет</p>' }
+
+    <div class="spread" style="margin:16px 0 6px">
+      <h3 style="margin:0">Ссылки</h3>
+      <button class="btn sm" onclick="openMaterialModal('${s.id}')">+ Ссылка</button>
+    </div>
+    ${ mats.length ? mats.map(m=>`
+      <div class="spread small" style="padding:5px 0;border-bottom:1px solid var(--line)">
+        <span>${m.type==='conf'?'🎥':'🖊'} ${esc(m.title)}</span>
+        <a href="${esc(m.url)}" target="_blank" rel="noopener">Открыть</a>
+      </div>`).join('') : '<p class="muted small">Ссылок нет</p>' }
+
+    <h3 style="margin-top:16px">Заметка репетитора <span class="muted tiny">(видна только вам)</span></h3>
+    <textarea id="stNote" rows="2">${esc(s.note||'')}</textarea>
+    <button class="btn sm" style="margin-top:6px" onclick="saveStudentNote('${s.id}')">Сохранить заметку</button>
+  `;
+  openModal('Карточка: ' + esc(s.name), body, `
+    <button class="btn" onclick="closeModal()">Закрыть</button>
+  `, true);
+};
+
+window.saveStudentText = function(id){
+  const s = studentById(id); if(!s) return;
+  s.text = $('#stText').value;
+  save(); toast('Текст сохранён');
+};
+window.saveStudentNote = function(id){
+  const s = studentById(id); if(!s) return;
+  s.note = $('#stNote').value;
+  save(); toast('Заметка сохранена');
+};
+
+/* ============================================================
+   VIEWS: БУХГАЛТЕРИЯ (репетитор)
+   ============================================================ */
+function renderFinance(root){
+  const now = new Date();
+  const Y = now.getFullYear(), M = now.getMonth();
+  const monthPays = paymentsInMonth(Y,M).reduce((s,p)=>s+Number(p.amount||0),0);
+  const totalPaid = DB.payments.reduce((s,p)=>s+Number(p.amount||0),0);
+  const subs = DB.students.filter(s=>s.mode==='subscription');
+  const debt = DB.students.filter(s=>s.mode==='perLesson').reduce((sum,s)=>sum+debtPerLesson(s),0);
+
+  root.innerHTML = `
+    <div class="spread" style="margin-bottom:16px">
+      <h1>Бухгалтерия</h1>
+      <div class="row">
+        <button class="btn primary" onclick="openPaymentModal()">+ Платёж</button>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+      <div class="kpi"><div class="num">${fmtMoney(totalPaid)}</div><div class="lbl">Оплачено всего</div></div>
+      <div class="kpi"><div class="num">${fmtMoney(monthPays)}</div><div class="lbl">Оплачено за месяц</div></div>
+      <div class="kpi"><div class="num" style="color:${debt>0?'var(--bad)':'var(--ok)'}">${fmtMoney(debt)}</div><div class="lbl">Долги по поурочным</div></div>
+      <div class="kpi"><div class="num">${subs.length}</div><div class="lbl">Абонементов</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <h2>Абонементы</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Ученик</th><th>Оплачено</th><th>Проведено</th><th>Остаток</th><th>Стоимость</th><th></th></tr></thead>
+          <tbody>
+            ${ subs.length ? subs.map(s=>`
+              <tr>
+                <td>${esc(s.name)}</td>
+                <td>${fmtMoney(paidTotal(s.id))}</td>
+                <td>${doneCount(s.id)}</td>
+                <td><strong>${s.balance}</strong></td>
+                <td>${fmtMoney(s.cost)}</td>
+                <td><button class="btn sm" onclick="addOneLesson('${s.id}')">+ зан.</button></td>
+              </tr>`).join('') : '<tr><td colspan="6" class="muted">Нет абонементов</td></tr>' }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="spread" style="margin-bottom:10px">
+        <h2>Реестр платежей</h2>
+        <button class="btn sm" onclick="openPaymentModal()">+ Платёж</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Дата</th><th>Ученик</th><th>Сумма</th><th>Способ</th><th>Комментарий</th></tr></thead>
+          <tbody>
+            ${ DB.payments.length ? DB.payments.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(p=>`
+              <tr>
+                <td>${fmtDate(p.date)}</td>
+                <td>${esc(studentName(p.studentId))}</td>
+                <td><strong>${fmtMoney(p.amount)}</strong></td>
+                <td>${esc(p.method||'—')}</td>
+                <td class="muted">${esc(p.comment||'')}</td>
+              </tr>`).join('') : '<tr><td colspan="5" class="muted">Платежей нет</td></tr>' }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/* Пополнение абонемента на 1 занятие (paidLessons + balance) */
+window.addOneLesson = function(studentId){
+  const s = studentById(studentId);
+  if(!s) return;
+  s.balance += 1;
+  s.paidLessons = (s.paidLessons||0) + 1;
+  save(); renderActiveView(); toast('Абонемент пополнен на 1 занятие');
+};
+
+/* Модалка платежа */
+window.openPaymentModal = function(studentId){
+  const opts = DB.students.map(s => `<option value="${s.id}" ${s.id===studentId?'selected':''}>${esc(s.name)}</option>`).join('');
+  const body = `
+    <div class="field"><label>Ученик</label><select id="payStudent">${opts}</select></div>
+    <div class="row">
+      <div class="field" style="flex:1"><label>Дата</label><input id="payDate" type="date" value="${todayStr()}"></div>
+      <div class="field" style="flex:1"><label>Сумма (₽)</label><input id="payAmount" type="number" value="1800" min="0"></div>
+    </div>
+    <div class="field"><label>Способ</label><input id="payMethod" placeholder="Перевод / Карта / Наличные"></div>
+    <div class="field"><label>Комментарий</label><input id="payComment" placeholder="Абонемент на 10 занятий"></div>
+    <p class="tiny muted">Для абонемента остаток увеличится на floor(сумма / стоимость).</p>
+  `;
+  openModal('Новый платёж', body, `
+    <button class="btn" onclick="closeModal()">Отмена</button>
+    <button class="btn primary" onclick="createPayment()">Добавить</button>
+  `);
+};
+
+window.createPayment = function(){
+  const studentId = $('#payStudent').value;
+  const date = $('#payDate').value;
+  const amount = Number($('#payAmount').value)||0;
+  const method = $('#payMethod').value.trim();
+  const comment = $('#payComment').value.trim();
+  const s = studentById(studentId);
+  if(!s || !amount){ toast('Укажите сумму'); return; }
+  DB.payments.push({ id: uid('p'), studentId, date, amount, method, comment });
+  if(s.mode === 'subscription' && s.cost > 0){
+    const add = Math.floor(amount / s.cost);
+    s.balance += add;
+    s.paidLessons = (s.paidLessons||0) + add;
+  }
+  save();
+  closeModal();
+  renderActiveView();
+  toast('Платёж добавлен');
+};
+
+/* ============================================================
+   VIEWS: ПРОГНОЗ (репетитор)
+   ============================================================ */
+function renderForecast(root){
+  const now = new Date();
+  const months = [];
+  for(let i=5;i>=0;i--){
+    const r = addMonths(now.getFullYear(), now.getMonth(), -i);
+    months.push(r);
+  }
+  const data = months.map(({y,m})=>{
+    const key = y+'-'+pad(m+1);
+    const mLessons = DB.lessons.filter(l=>monthKey(l.date)===key);
+    const done = mLessons.filter(l=>l.status==='done');
+    const planned = mLessons.filter(l=>l.status==='planned');
+    const earned = done.reduce((s,l)=>{
+      const st = studentById(l.studentId); return s + (st?st.cost:0);
+    },0);
+    const forecast = earned + planned.reduce((s,l)=>{
+      const st = studentById(l.studentId); return s + (st?st.cost:0);
+    },0);
+    const paid = DB.payments.filter(p=>monthKey(p.date)===key).reduce((s,p)=>s+Number(p.amount||0),0);
+    return { y, m, label: monthName(m).slice(0,3), done: done.length, planned: planned.length, earned, forecast, paid };
+  });
+
+  const maxVal = Math.max(1, ...data.map(d=>Math.max(d.earned, d.forecast)));
+  const activeStudents = DB.students.length;
+  const avgCheck = activeStudents ? Math.round(DB.students.reduce((s,x)=>s+x.cost,0)/activeStudents) : 0;
+  const thisMonth = data[data.length-1];
+  const endForecast = thisMonth.forecast;
+
+  root.innerHTML = `
+    <div class="spread" style="margin-bottom:16px">
+      <h1>Прогноз</h1>
+      <span class="muted small">последние 6 месяцев</span>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+      <div class="kpi"><div class="num">${activeStudents}</div><div class="lbl">Учеников сейчас</div></div>
+      <div class="kpi"><div class="num">${fmtMoney(avgCheck)}</div><div class="lbl">Средний чек</div></div>
+      <div class="kpi"><div class="num">${fmtMoney(endForecast)}</div><div class="lbl">Прогноз до конца месяца</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <h2>Доход по месяцам</h2>
+      <div class="chart">
+        ${data.map(d=>`
+          <div class="col">
+            <div class="bars">
+              <div class="bar received" style="height:${Math.max(2, Math.round(d.earned/maxVal*100))}%" title="Получено: ${fmtMoney(d.earned)}"></div>
+              <div class="bar forecast" style="height:${Math.max(2, Math.round(d.forecast/maxVal*100))}%" title="Прогноз: ${fmtMoney(d.forecast)}"></div>
+            </div>
+            <div class="clabel">${d.label}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--accent)"></span>Получено (проведено)</span>
+        <span><span class="dot" style="background:var(--ok)"></span>Прогноз (с запланированными)</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Детализация по месяцам</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Месяц</th><th>Учеников</th><th>Проведено</th><th>Запланировано</th><th>Заработано</th><th>Оплачено</th><th>Прогноз</th></tr></thead>
+          <tbody>
+            ${data.map(d=>`
+              <tr>
+                <td>${monthName(d.m)} ${d.y}</td>
+                <td>${activeStudents}</td>
+                <td>${d.done}</td>
+                <td>${d.planned}</td>
+                <td>${fmtMoney(d.earned)}</td>
+                <td>${fmtMoney(d.paid)}</td>
+                <td><strong>${fmtMoney(d.forecast)}</strong></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   VIEWS: КАБИНЕТ РОДИТЕЛЯ
+   ============================================================ */
+function renderParentCabinet(root){
+  const u = currentUser();
+  const s = studentById(u.studentId);
+  if(!s){ root.innerHTML = '<div class="card"><p class="muted">Ученик не привязан к аккаунту.</p></div>'; return; }
+
+  const today = todayStr();
+  const upcoming = lessonsOf(s.id)
+    .filter(l => l.status === 'planned' && l.date >= today)
+    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))
+    .slice(0,6);
+  const hw = homeworkOf(s.id);
+  const mats = materialsOf(s.id);
+  const pays = paymentsOf(s.id).sort((a,b)=>b.date.localeCompare(a.date));
+  const past = lessonsOf(s.id).filter(l=>l.status==='done').sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).slice(0,8);
+
+  root.innerHTML = `
+    <h1>Кабинет родителя</h1>
+    <p class="muted small" style="margin-bottom:16px">${esc(u.name)} · ребёнок: <strong>${esc(s.name)}</strong></p>
+
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
+      <div class="kpi"><div class="num" style="font-size:20px">${esc(s.name)}</div><div class="lbl">Ученик</div></div>
+      <div class="kpi"><div class="num">${s.mode==='subscription'?s.balance:'—'}</div><div class="lbl">Остаток занятий</div></div>
+      <div class="kpi"><div class="num" style="font-size:18px">${upcoming.length?fmtDate(upcoming[0].date)+' '+upcoming[0].time:'—'}</div><div class="lbl">Ближайшее занятие</div></div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+      <div class="card">
+        <h2>Ближайшие занятия</h2>
+        ${ upcoming.length ? upcoming.map(l=>`
+          <div class="spread small" style="padding:6px 0;border-bottom:1px solid var(--line)">
+            <span>${fmtDate(l.date)} · ${l.time}</span><span class="pill planned">Запланировано</span>
+          </div>`).join('') : '<p class="muted">Занятий нет</p>' }
+      </div>
+      <div class="card">
+        <h2>Домашние задания</h2>
+        ${ hw.length ? hw.map(h=>`
+          <div class="spread small" style="padding:6px 0;border-bottom:1px solid var(--line)">
+            <span>${esc(h.title)} <span class="muted">· до ${fmtDate(h.due)}</span></span>
+            <span class="pill ${h.done?'done':'planned'}">${h.done?'Выполнено':'Активно'}</span>
+          </div>`).join('') : '<p class="muted">ДЗ нет</p>' }
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+      <div class="card">
+        <h2>Ссылки на занятия</h2>
+        ${ mats.length ? mats.map(m=>`
+          <div class="spread small" style="padding:6px 0;border-bottom:1px solid var(--line)">
+            <span>${m.type==='conf'?'🎥':'🖊'} ${esc(m.title)}</span>
+            <a class="btn sm" href="${esc(m.url)}" target="_blank" rel="noopener">Открыть</a>
+          </div>`).join('') : '<p class="muted">Ссылок нет</p>' }
+      </div>
+      <div class="card">
+        <h2>История оплат</h2>
+        ${ pays.length ? pays.map(p=>`
+          <div class="spread small" style="padding:6px 0;border-bottom:1px solid var(--line)">
+            <span>${fmtDate(p.date)} · ${esc(p.method||'—')}</span><strong>${fmtMoney(p.amount)}</strong>
+          </div>`).join('') : '<p class="muted">Оплат нет</p>' }
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <h2>Сообщение от репетитора</h2>
+      <p>${esc(s.text || 'Пока сообщений нет.')}</p>
+    </div>
+
+    <div class="card">
+      <h2>Прошедшие занятия</h2>
+      ${ past.length ? past.map(l=>`
+        <div class="spread small" style="padding:6px 0;border-bottom:1px solid var(--line)">
+          <span>${fmtDate(l.date)} · ${l.time}</span><span class="pill done">Проведено</span>
+        </div>`).join('') : '<p class="muted">Прошедших занятий нет</p>' }
+    </div>
+  `;
+}
+
+/* ============================================================
+   VIEWS: КАБИНЕТ УЧЕНИКА (то же, без оплат)
+   ============================================================ */
+function renderStudentCabinet(root){
+  const u = currentUser();
+  const s = studentById(u.studentId);
+  if(!s){ root.innerHTML = '<div class="card"><p class="muted">Ученик не привязан к аккаунту.</p></div>'; return; }
+
+  const today = todayStr();
+  const upcoming = lessonsOf(s.id)
+    .filter(l => l.status === 'planned' && l.date >= today)
+    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time))
+    .slice(0,6);
+  const hw = homeworkOf(s.id);
+  const mats = materialsOf(s.id);
+  const past = lessonsOf(s.id).filter(l=>l.status==='done').sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).slice(0,8);
+
+  root.innerHTML = `
+    <h1>Кабинет ученика</h1>
+    <p class="muted small" style="margin-bottom:16px">${esc(u.name)} · ${esc(s.grade)}</p>
+
+    <div class="grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:18px">
+      <div class="kpi"><div class="num">${s.mode==='subscription'?s.balance:'—'}</div><div class="lbl">Остаток занятий</div></div>
+      <div class="kpi"><div class="num" style="font-size:18px">${upcoming.length?fmtDate(upcoming[0].date)+' '+upcoming[0].time:'—'}</div><div class="lbl">Ближайшее занятие</div></div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+      <div class="card">
+        <h2>Ближайшие занятия</h2>
+        ${ upcoming.length ? upcoming.map(l=>`
+          <div class="spread small" style="padding:6px 0;border-bottom:1px solid var(--line)">
+            <span>${fmtDate(l.date)} · ${l.time}</span><span class="pill planned">Запланировано</span>
+          </div>`).join('') : '<p class="muted">Занятий нет</p>' }
+      </div>
+      <div class="card">
+        <h2>Домашние задания</h2>
+        ${ hw.length ? hw.map(h=>`
+          <div class="spread small" style="padding:6px 0;border-bottom:1px solid var(--line)">
+            <span>${esc(h.title)} <span class="muted">· до ${fmtDate(h.due)}</span></span>
+            <span class="pill ${h.done?'done':'planned'}">${h.done?'Выполнено':'Активно'}</span>
+          </div>`).join('') : '<p class="muted">ДЗ нет</p>' }
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <h2>Ссылки на занятия</h2>
+      ${ mats.length ? mats.map(m=>`
+        <div class="spread small" style="padding:6px 0;border-bottom:1px solid var(--line)">
+          <span>${m.type==='conf'?'🎥':'🖊'} ${esc(m.title)}</span>
+          <a class="btn sm" href="${esc(m.url)}" target="_blank" rel="noopener">Открыть</a>
+        </div>`).join('') : '<p class="muted">Ссылок нет</p>' }
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <h2>Сообщение от репетитора</h2>
+      <p>${esc(s.text || 'Пока сообщений нет.')}</p>
+    </div>
+
+    <div class="card">
+      <h2>Прошедшие занятия</h2>
+      ${ past.length ? past.map(l=>`
+        <div class="spread small" style="padding:6px 0;border-bottom:1px solid var(--line)">
+          <span>${fmtDate(l.date)} · ${l.time}</span><span class="pill done">Проведено</span>
+        </div>`).join('') : '<p class="muted">Прошедших занятий нет</p>' }
+    </div>
+  `;
+}
+
+/* ============================================================
+   MODALS — универсальные
+   ============================================================ */
+function openModal(title, bodyHtml, footHtml, wide){
+  $('#modalTitle').textContent = title;
+  $('#modalBody').innerHTML = bodyHtml;
+  $('#modalFoot').innerHTML = footHtml || '';
+  $('#modal').style.maxWidth = wide ? '720px' : '560px';
+  $('#overlay').classList.add('open');
+}
+function closeModal(){ $('#overlay').classList.remove('open'); }
+window.closeModal = closeModal;
+$('#modalClose').onclick = closeModal;
+$('#overlay').addEventListener('click', e => { if(e.target === $('#overlay')) closeModal(); });
+
+/* Esc закрывает модальные окна */
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') closeModal();
+});
+
+/* Модалки ДЗ и ссылок (используются в карточке ученика) */
+window.openHomeworkModal = function(studentId){
+  const body = `
+    <div class="field"><label>Название</label><input id="hwTitle" placeholder="Уравнения, вариант 3"></div>
+    <div class="field"><label>Дедлайн</label><input id="hwDue" type="date" value="${todayStr()}"></div>
+    <div class="field"><label>Ссылка (необязательно)</label><input id="hwUrl" placeholder="https://..."></div>
+  `;
+  openModal('Новое ДЗ', body, `
+    <button class="btn" onclick="closeModal()">Отмена</button>
+    <button class="btn primary" onclick="createHomework('${studentId}')">Добавить</button>
+  `);
+};
+window.createHomework = function(studentId){
+  const title = $('#hwTitle').value.trim();
+  const due = $('#hwDue').value;
+  const url = $('#hwUrl').value.trim();
+  if(!title){ toast('Укажите название'); return; }
+  DB.homework.push({ id: uid('h'), studentId, title, due, done:false, url });
+  save();
+  closeModal();
+  if(window.__reopenStudentCard) window.__reopenStudentCard(studentId);
+  renderActiveView();
+  toast('ДЗ добавлено');
+};
+
+window.openMaterialModal = function(studentId){
+  const body = `
+    <div class="field"><label>Название</label><input id="matTitle" placeholder="Конференция / доска"></div>
+    <div class="field"><label>Тип</label>
+      <select id="matType"><option value="conf">Конференция</option><option value="board">Онлайн-доска</option></select>
+    </div>
+    <div class="field"><label>Ссылка</label><input id="matUrl" placeholder="https://..."></div>
+  `;
+  openModal('Новая ссылка', body, `
+    <button class="btn" onclick="closeModal()">Отмена</button>
+    <button class="btn primary" onclick="createMaterial('${studentId}')">Добавить</button>
+  `);
+};
+window.createMaterial = function(studentId){
+  const title = $('#matTitle').value.trim();
+  const type = $('#matType').value;
+  const url = $('#matUrl').value.trim();
+  if(!title || !url){ toast('Заполните название и ссылку'); return; }
+  DB.materials.push({ id: uid('m'), studentId, title, url, type });
+  save();
+  closeModal();
+  if(window.__reopenStudentCard) window.__reopenStudentCard(studentId);
+  renderActiveView();
+  toast('Ссылка добавлена');
+};
+
+/* ============================================================
+   ЭКСПОРТ / ИМПОРТ
+   ============================================================ */
+$('#btnExport').onclick = function(){
+  const blob = new Blob([JSON.stringify(DB, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'gridschool-backup-' + todayStr() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  toast('Экспорт готов');
+};
+
+$('#btnImport').onclick = function(){ $('#importFile').click(); };
+$('#importFile').onchange = function(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = function(){
+    try{
+      const data = JSON.parse(reader.result);
+      if(!data || !Array.isArray(data.users)) throw new Error('bad');
+      DB = data;
+      save();
+      renderAll();
+      toast('Импорт выполнен');
+    }catch(err){
+      toast('Ошибка: неверный JSON');
+    }
+  };
+  reader.readAsText(f);
+  e.target.value = '';
+};
+
+/* ============================================================
+   СОБЫТИЯ ВХОДА / ДЕМО
+   ============================================================ */
+$('#loginForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const email = $('#loginEmail').value.trim();
+  const pass = $('#loginPass').value;
+  login(email, pass);
+});
+
+$$('#loginScreen [data-demo]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const email = btn.getAttribute('data-demo');
+    $('#loginEmail').value = email;
+    $('#loginPass').value = 'demo';
+    login(email, 'demo');
+  });
+});
+
+$('#btnLogout').onclick = function(){
+  logout();
+  toast('Вы вышли из аккаунта');
+};
+
+/* ============================================================
+   СТАРТ
+   ============================================================ */
+load();
+renderAll();
+</script>
+</body>
+</html>
