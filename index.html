@@ -78,6 +78,7 @@
   .avatar{width:38px;height:38px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:800}
   details summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:14px}
   .kbd{font-family:ui-monospace,monospace;background:#f1f3f7;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12px}
+  .empty{padding:24px;text-align:center;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -121,9 +122,12 @@
 /* ============================================================
    GridSchool — прототип на localStorage
    Роли: TUTOR / PARENT / STUDENT
+   Полная версия: дашборд, расписание с календарём, абонементы,
+   переносы, бухгалтерия, прогноз, кабинеты родителя и ученика.
+   Все данные пустые (только аккаунты для входа).
    ============================================================ */
 
-const DB_KEY = 'gridschool_v1';
+const DB_KEY = 'gridschool_v4';
 const uid = () => Math.random().toString(36).slice(2,9);
 const todayISO = () => new Date().toISOString().slice(0,10);
 const fmt = n => new Intl.NumberFormat('ru-RU').format(Math.round(n||0)) + ' ₽';
@@ -131,69 +135,24 @@ const monthKey = d => (d||'').slice(0,7);
 const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 const DOW = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 
-/* ---------- seed ---------- */
+/* ---------- seed: только аккаунты, все данные пустые ---------- */
 function seed(){
-  const students = [
-    { id:'s1', name:'Аня Петрова', grade:'9', parentId:'p1', cost:2000, mode:'subscription',
-      freq:'Пн, Ср 17:00', duration:60, balance:6, paidLessons:10, totalLessons:10,
-      note:'Слабое место — тригонометрия. Готовимся к ОГЭ.', text:'Аня, не забудь: в среду разбираем вариант №4. Возьми черновик.', parentName:'Ольга Петрова' },
-    { id:'s2', name:'Марк Ильин', grade:'11', parentId:'p2', cost:2500, mode:'perLesson',
-      freq:'Вт, Чт 19:00', duration:90, balance:0, paidLessons:0, totalLessons:0,
-      note:'Профильная математика, ЕГЭ. Сильный ученик.', text:'Марк, дома — задачи 13–15 из сборника.', parentName:'Сергей Ильин' },
-    { id:'s3', name:'Лена Соколова', grade:'7', parentId:'p3', cost:1800, mode:'subscription',
-      freq:'Сб 11:00', duration:60, balance:2, paidLessons:8, totalLessons:6,
-      note:'Нужно подтянуть дроби.', text:'Лена, повтори правила сложения дробей.', parentName:'Ирина Соколова' }
-  ];
-
-  const lessons = [
-    L('s1','2026-11-02','17:00',60,'done'),
-    L('s1','2026-11-04','17:00',60,'done'),
-    L('s1','2026-11-09','17:00',60,'planned'),
-    L('s1','2026-11-11','17:00',60,'moved'),
-    L('s1','2026-11-16','17:00',60,'planned'),
-    L('s2','2026-11-03','19:00',90,'done'),
-    L('s2','2026-11-05','19:00',90,'planned'),
-    L('s2','2026-11-10','19:00',90,'planned'),
-    L('s3','2026-11-07','11:00',60,'done'),
-    L('s3','2026-11-14','11:00',60,'planned'),
-    L('s3','2026-11-21','11:00',60,'planned')
-  ];
-
-  const payments = [
-    { id:uid(), studentId:'s1', date:'2026-11-01', amount:20000, method:'Перевод', comment:'Абонемент 10 занятий' },
-    { id:uid(), studentId:'s2', date:'2026-11-03', amount:2500, method:'Перевод', comment:'Поурочно' },
-    { id:uid(), studentId:'s3', date:'2026-10-28', amount:14400, method:'Наличные', comment:'Абонемент 8 занятий' }
-  ];
-
-  const materials = [
-    { id:uid(), studentId:'s1', title:'Конференция Zoom', url:'https://zoom.us/j/111', type:'conf' },
-    { id:uid(), studentId:'s1', title:'Онлайн-доска', url:'https://miro.com/board/abc', type:'board' },
-    { id:uid(), studentId:'s2', title:'Конференция Google Meet', url:'https://meet.google.com/xyz', type:'conf' },
-    { id:uid(), studentId:'s3', title:'Онлайн-доска Excalidraw', url:'https://excalidraw.com/#abc', type:'board' }
-  ];
-
-  const homework = [
-    { id:uid(), studentId:'s1', title:'Вариант ОГЭ №4', due:'2026-11-09', done:false, url:'' },
-    { id:uid(), studentId:'s1', title:'Тригонометрия: карточки', due:'2026-11-06', done:true, url:'' },
-    { id:uid(), studentId:'s2', title:'Задачи 13–15', due:'2026-11-08', done:false, url:'' },
-    { id:uid(), studentId:'s3', title:'Дроби: тренажёр', due:'2026-11-12', done:false, url:'' }
-  ];
-
-  const reschedules = [
-    { id:uid(), lessonId:'s1_2026-11-11', from:'2026-11-11 17:00', to:'2026-11-12 17:00', reason:'Болезнь' }
-  ];
-
   const users = [
     { id:'u1', email:'tutor@gridschool.ru', pass:'demo', role:'TUTOR', name:'Репетитор' },
-    { id:'p1', email:'parent@gridschool.ru', pass:'demo', role:'PARENT', name:'Ольга Петрова', studentId:'s1' },
-    { id:'st1', email:'student@gridschool.ru', pass:'demo', role:'STUDENT', name:'Аня Петрова', studentId:'s1' }
+    { id:'p1', email:'parent@gridschool.ru', pass:'demo', role:'PARENT', name:'Родитель', studentId:null },
+    { id:'st1', email:'student@gridschool.ru', pass:'demo', role:'STUDENT', name:'Ученик', studentId:null }
   ];
 
-  return { users, students, lessons, payments, materials, homework, reschedules, session:null };
-
-  function L(studentId, date, time, duration, status){
-    return { id: studentId+'_'+date+'_'+time, studentId, date, time, duration, status };
-  }
+  return {
+    users,
+    students: [],
+    lessons: [],
+    payments: [],
+    materials: [],
+    homework: [],
+    reschedules: [],
+    session: null
+  };
 }
 
 /* ---------- store ---------- */
@@ -204,7 +163,8 @@ function load(){
 }
 let DB = load();
 function save(){ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }
-function resetDB(){ localStorage.removeItem(DB_KEY); DB = load(); render(); toast('Демо-данные сброшены'); }
+function resetDB(){ localStorage.removeItem(DB_KEY); DB = load(); render(); toast('Данные очищены'); }
+window.resetDB = resetDB;
 
 /* ---------- helpers ---------- */
 const studentById = id => DB.students.find(s=>s.id===id);
@@ -264,7 +224,6 @@ function render(){
   if(u.role==='TUTOR')       v.innerHTML = tutorView(u);
   else if(u.role==='PARENT') v.innerHTML = parentView(u);
   else                       v.innerHTML = studentView(u);
-  afterRender();
 }
 function setTab(t){ TAB=t; render(); }
 
@@ -334,7 +293,7 @@ let CAL_MONTH = todayISO().slice(0,7);
 function tutorSchedule(){
   const [y,m] = CAL_MONTH.split('-').map(Number);
   const first = new Date(y, m-1, 1);
-  const startDow = (first.getDay()+6)%7; // Пн=0
+  const startDow = (first.getDay()+6)%7;
   const daysInMonth = new Date(y, m, 0).getDate();
   const today = todayISO();
 
@@ -417,6 +376,7 @@ function tutorStudents(){
       <h1>Ученики</h1>
       <button class="primary sm" onclick="openStudentForm()">+ Ученик</button>
     </div>
+    ${DB.students.length ? `
     <div class="grid g2">
       ${DB.students.map(s=>{
         const l = lessonsOf(s.id);
@@ -426,7 +386,7 @@ function tutorStudents(){
           <div class="flex-bt">
             <div class="row">
               <div class="avatar">${initials(s.name)}</div>
-              <div><b>${s.name}</b><div class="muted">${s.grade} класс · ${s.freq}</div></div>
+              <div><b>${escapeHtml(s.name)}</b><div class="muted">${escapeHtml(s.grade)} класс · ${escapeHtml(s.freq)}</div></div>
             </div>
             <button class="sm" onclick="openStudentCard('${s.id}')">Карточка</button>
           </div>
@@ -435,7 +395,7 @@ function tutorStudents(){
             <div><h3>Формат</h3><b>${s.mode==='subscription'?'Абонемент':'Поурочно'}</b></div>
             <div><h3>Остаток</h3>
               ${s.mode==='subscription'
-                ? `<b class="${s.balance<=2?'':'ok'}" style="color:${s.balance<=2?'var(--bad)':'var(--ok)'}">${s.balance} зан.</b>`
+                ? `<b style="color:${s.balance<=2?'var(--bad)':'var(--ok)'}">${s.balance} зан.</b>`
                 : '<span class="muted">—</span>'}
             </div>
           </div>
@@ -448,6 +408,7 @@ function tutorStudents(){
         </div>`;
       }).join('')}
     </div>
+    ` : `<div class="card"><div class="empty">Пока нет учеников. Нажмите «+ Ученик», чтобы добавить первого.</div></div>`}
   `;
 }
 
@@ -458,8 +419,8 @@ function openStudentCard(id){
   const hw = homeworkOf(id);
   const mat = materialsOf(id);
   const html = `
-    <div class="flex-bt"><h1>${s.name}</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
-    <p class="muted">${s.grade} класс · ${s.freq} · ${s.duration} мин · ${fmt(s.cost)} ${s.mode==='subscription'?'/ абонемент':'/ занятие'}</p>
+    <div class="flex-bt"><h1>${escapeHtml(s.name)}</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
+    <p class="muted">${escapeHtml(s.grade)} класс · ${escapeHtml(s.freq)} · ${s.duration} мин · ${fmt(s.cost)} ${s.mode==='subscription'?'/ абонемент':'/ занятие'}</p>
 
     <div class="grid g4" style="margin:14px 0">
       ${kpi('Осталось', s.mode==='subscription'? s.balance+' зан.':'—', 'в абонементе')}
@@ -481,7 +442,7 @@ function openStudentCard(id){
         <h2>Оплаты</h2>
         ${pay.length? pay.map(p=>`
           <div class="rowline">
-            <div><b>${fmtDate(p.date)}</b> · ${p.method}<div class="muted">${p.comment||''}</div></div>
+            <div><b>${fmtDate(p.date)}</b> · ${escapeHtml(p.method)}<div class="muted">${escapeHtml(p.comment||'')}</div></div>
             <b>${fmt(p.amount)}</b>
           </div>`).join('') : '<p class="muted">Пока нет</p>'}
         <button class="sm" style="margin-top:10px" onclick="openPaymentForm('${id}')">+ Оплата</button>
@@ -548,12 +509,13 @@ function tutorMoney(){
 
     <div class="card" style="margin-top:16px">
       <div class="flex-bt"><h2>Абонементы</h2></div>
+      ${DB.students.filter(s=>s.mode==='subscription').length ? `
       <table>
         <tr><th>Ученик</th><th>Оплачено зан.</th><th>Проведено</th><th>Остаток</th><th>Стоимость</th><th></th></tr>
         ${DB.students.filter(s=>s.mode==='subscription').map(s=>{
           const done = DB.lessons.filter(l=>l.studentId===s.id && l.status==='done').length;
           return `<tr>
-            <td><b>${s.name}</b></td>
+            <td><b>${escapeHtml(s.name)}</b></td>
             <td>${s.paidLessons}</td>
             <td>${done}</td>
             <td><span class="pill ${s.balance<=2?'bad':'ok'}">${s.balance}</span></td>
@@ -562,18 +524,21 @@ function tutorMoney(){
           </tr>`;
         }).join('')}
       </table>
+      ` : `<div class="empty">Абонементов пока нет.</div>`}
     </div>
 
     <div class="card" style="margin-top:16px">
       <div class="flex-bt"><h2>Реестр платежей</h2><button class="primary sm" onclick="openPaymentForm()">+ Платёж</button></div>
+      ${DB.payments.length ? `
       <table>
         <tr><th>Дата</th><th>Ученик</th><th>Сумма</th><th>Способ</th><th>Комментарий</th></tr>
         ${DB.payments.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(p=>{
           const s = studentById(p.studentId);
-          return `<tr><td>${fmtDate(p.date)}</td><td>${s?.name||'—'}</td>
-            <td><b>${fmt(p.amount)}</b></td><td>${p.method}</td><td class="muted">${p.comment||''}</td></tr>`;
-        }).join('') || '<tr><td colspan="5" class="muted">Нет платежей</td></tr>'}
+          return `<tr><td>${fmtDate(p.date)}</td><td>${s?escapeHtml(s.name):'—'}</td>
+            <td><b>${fmt(p.amount)}</b></td><td>${escapeHtml(p.method)}</td><td class="muted">${escapeHtml(p.comment||'')}</td></tr>`;
+        }).join('')}
       </table>
+      ` : `<div class="empty">Платежей пока нет.</div>`}
     </div>
   `;
 }
@@ -596,7 +561,6 @@ function tutorForecast(){
     return { m, done:done.length, planned:planned.length, income, students, earned, expected };
   });
 
-  // Простой bar для дохода
   const max = Math.max(1, ...rows.map(r=>Math.max(r.income, r.expected+r.earned)));
 
   return `
@@ -646,21 +610,18 @@ function tutorForecast(){
 }
 
 /* ============================================================
-   PARENT
+   PARENT / STUDENT
    ============================================================ */
 function parentView(u){
-  const s = studentById(u.studentId); if(!s) return '<div class="card">Ученик не привязан</div>';
+  const s = studentById(u.studentId);
+  if(!s) return `<div class="card"><div class="empty">Ученик пока не привязан к аккаунту родителя.</div></div>`;
   return familyHome(s, false);
 }
-
-/* ============================================================
-   STUDENT
-   ============================================================ */
 function studentView(u){
-  const s = studentById(u.studentId); if(!s) return '<div class="card">Ученик не привязан</div>';
+  const s = studentById(u.studentId);
+  if(!s) return `<div class="card"><div class="empty">Ученик пока не привязан к аккаунту.</div></div>`;
   return familyHome(s, true);
 }
-
 function familyHome(s, isStudent){
   const today = todayISO();
   const up = lessonsOf(s.id).filter(l=>l.status==='planned' && l.date>=today);
@@ -671,7 +632,7 @@ function familyHome(s, isStudent){
 
   return `
     <div class="grid g3">
-      ${kpi('Ученик', s.name, s.grade+' класс')}
+      ${kpi('Ученик', escapeHtml(s.name), escapeHtml(s.grade)+' класс')}
       ${kpi('Осталось занятий', s.mode==='subscription'? s.balance:'—', s.mode==='subscription'?'в абонементе':'поурочно')}
       ${kpi('Ближайшее', up[0]? fmtDate(up[0].date)+' '+up[0].time : '—', up[0]? up[0].duration+' мин':'нет занятий')}
     </div>
@@ -715,7 +676,7 @@ function familyHome(s, isStudent){
     ${!isStudent ? `
     <div class="card" style="margin-top:16px">
       <h2>История оплат</h2>
-      ${pay.length? pay.map(p=>`<div class="rowline"><div>${fmtDate(p.date)} · ${p.method}</div><b>${fmt(p.amount)}</b></div>`).join('') : '<p class="muted">Нет оплат</p>'}
+      ${pay.length? pay.map(p=>`<div class="rowline"><div>${fmtDate(p.date)} · ${escapeHtml(p.method)}</div><b>${fmt(p.amount)}</b></div>`).join('') : '<p class="muted">Нет оплат</p>'}
     </div>` : ''}
 
     <div class="card" style="margin-top:16px">
@@ -772,10 +733,11 @@ function saveNewStudent(){
 }
 
 function openLessonForm(){
+  if(!DB.students.length){ toast('Сначала добавьте ученика'); return; }
   showModal(`
     <div class="flex-bt"><h1>Новое занятие</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
     <div class="field"><label>Ученик</label>
-      <select id="lfS">${DB.students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select>
+      <select id="lfS">${DB.students.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select>
     </div>
     <div class="grid g2">
       <div class="field"><label>Дата</label><input id="lfD" type="date" value="${todayISO()}"></div>
@@ -798,7 +760,7 @@ function openLessonCard(id){
   const l = DB.lessons.find(x=>x.id===id); if(!l) return;
   const s = studentById(l.studentId);
   showModal(`
-    <div class="flex-bt"><h1>${s?.name||'—'}</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
+    <div class="flex-bt"><h1>${s?escapeHtml(s.name):'—'}</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
     <p class="muted">${fmtDate(l.date)} · ${l.time} · ${l.duration} мин · ${fmt(s?.cost||0)}</p>
     <p>Статус: <span class="pill ${l.status==='done'?'ok':l.status==='moved'?'warn':l.status==='cancel'?'bad':''}">${statusRu(l.status)}</span></p>
     <div class="row" style="margin-top:14px">
@@ -808,7 +770,6 @@ function openLessonCard(id){
     </div>
   `);
 }
-
 function markDone(id){
   const l = DB.lessons.find(x=>x.id===id); if(!l) return;
   if(l.status==='done') return;
@@ -845,10 +806,11 @@ function saveMove(id){
 }
 
 function openPaymentForm(sid){
+  if(!DB.students.length){ toast('Сначала добавьте ученика'); return; }
   showModal(`
     <div class="flex-bt"><h1>Новый платёж</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
     <div class="field"><label>Ученик</label>
-      <select id="pfS">${DB.students.map(s=>`<option value="${s.id}" ${s.id===sid?'selected':''}>${s.name}</option>`).join('')}</select>
+      <select id="pfS">${DB.students.map(s=>`<option value="${s.id}" ${s.id===sid?'selected':''}>${escapeHtml(s.name)}</option>`).join('')}</select>
     </div>
     <div class="grid g2">
       <div class="field"><label>Дата</label><input id="pfD" type="date" value="${todayISO()}"></div>
@@ -933,8 +895,8 @@ function kpi(label, value, sub){
 function statusRu(s){
   return ({planned:'запланировано', done:'проведено', moved:'перенесено', cancel:'отменено'})[s] || s;
 }
-function initials(n){ return n.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase(); }
-function shortName(n){ return n.split(' ')[0]; }
+function initials(n){ return (n||'').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase(); }
+function shortName(n){ return (n||'').split(' ')[0]; }
 function fmtDate(iso){
   if(!iso) return '—';
   const [y,m,d] = iso.split('-');
@@ -960,15 +922,9 @@ function expectedRemaining(){
 /* ============================================================
    BOOT
    ============================================================ */
-function afterRender(){ /* место для доп. инициализации */ }
-
-// reset hotkey
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape') closeModal();
 });
-
-// reset кнопка (скрытая — можно вызвать из консоли: resetDB())
-window.resetDB = resetDB;
 
 render();
 </script>
