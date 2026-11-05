@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridSchool — репетитор по математике</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#ffffff; --ink:#111827; --muted:#6b7280;
+    --line:#e5e7eb; --accent:#2563eb; --accent-soft:#e8f0ff;
+    --ok:#059669; --warn:#d97706; --bad:#dc2626;
+    --radius:14px; --shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(17,24,39,.05);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:32px 32px;background-position:-1px -1px;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:24px}
+  header.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.02em}
+  .brand .logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:15px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:820px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  h1{font-size:22px;margin:0 0 4px}
+  h2{font-size:16px;margin:0 0 12px;letter-spacing:-.01em}
+  h3{font-size:14px;margin:0 0 8px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .muted{color:var(--muted);font-size:13px}
+  .kpi{font-size:26px;font-weight:800;letter-spacing:-.03em}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--accent-soft);color:var(--accent)}
+  .pill.ok{background:#e7f7ef;color:var(--ok)}
+  .pill.warn{background:#fef3e2;color:var(--warn)}
+  .pill.bad{background:#fdeaea;color:var(--bad)}
+  button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:#fff;padding:9px 14px;font-weight:600;transition:.15s}
+  button:hover{border-color:#c7cdd6}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:hover{filter:brightness(1.05)}
+  button.ghost{background:transparent}
+  button.sm{padding:5px 10px;font-size:13px;border-radius:8px}
+  button.bad{color:var(--bad);border-color:#f3caca}
+  input,select,textarea{font:inherit;width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 4px}
+  .field{margin-bottom:12px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+  th{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  tr:last-child td{border-bottom:0}
+  .hidden{display:none!important}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+  .tabs button{border-radius:999px;padding:8px 16px}
+  .tabs button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .cal .dow{font-size:12px;font-weight:700;color:var(--muted);text-align:center;padding:4px 0}
+  .cal .cell{min-height:88px;border:1px solid var(--line);border-radius:10px;padding:6px;background:#fff;font-size:12px;display:flex;flex-direction:column;gap:4px}
+  .cal .cell.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .cal .cell .num{font-weight:700;color:var(--muted)}
+  .cal .ev{background:var(--accent-soft);color:#1e3a8a;border-radius:6px;padding:2px 5px;font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+  .cal .ev.done{background:#e7f7ef;color:#065f46}
+  .cal .ev.moved{background:#fef3e2;color:#92400e}
+  .cal .ev.cancel{background:#fdeaea;color:#991b1b;text-decoration:line-through}
+  .rowline{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .rowline:last-child{border-bottom:0}
+  .auth{max-width:420px;margin:8vh auto}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.2s}
+  .toast.show{opacity:1}
+  .progress{height:8px;background:var(--line);border-radius:999px;overflow:hidden}
+  .progress > i{display:block;height:100%;background:var(--accent)}
+  .progress.low > i{background:var(--bad)}
+  .flex-bt{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:800}
+  details summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:14px}
+  .kbd{font-family:ui-monospace,monospace;background:#f1f3f7;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===================== AUTH ===================== -->
+  <div id="authView" class="auth card">
+    <div class="brand" style="margin-bottom:18px"><span class="logo">⌗</span> GridSchool</div>
+    <h1>Вход</h1>
+    <p class="muted" style="margin-bottom:16px">Репетитор по математике · учёт, расписание, кабинеты</p>
+    <div class="field"><label>Email</label><input id="loginEmail" placeholder="tutor@gridschool.ru"></div>
+    <div class="field"><label>Пароль</label><input id="loginPass" type="password" placeholder="demo"></div>
+    <button class="primary" style="width:100%" onclick="doLogin()">Войти</button>
+    <p class="muted" style="margin-top:14px">Демо-аккаунты:</p>
+    <div class="row" style="margin-top:6px">
+      <button class="sm" onclick="quick('tutor@gridschool.ru')">Репетитор</button>
+      <button class="sm" onclick="quick('parent@gridschool.ru')">Родитель</button>
+      <button class="sm" onclick="quick('student@gridschool.ru')">Ученик</button>
+    </div>
+    <p class="muted" style="margin-top:8px">Пароль у всех: <span class="kbd">demo</span></p>
+  </div>
+
+  <!-- ===================== APP ===================== -->
+  <div id="app" class="hidden">
+    <header class="top">
+      <div class="brand"><span class="logo">⌗</span> GridSchool</div>
+      <div class="row">
+        <span class="pill" id="whoami"></span>
+        <button class="sm" onclick="logout()">Выйти</button>
+      </div>
+    </header>
+
+    <div class="tabs" id="tabs"></div>
+    <div id="views"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   GridSchool — прототип на localStorage
+   Роли: TUTOR / PARENT / STUDENT
+   ============================================================ */
+
+const DB_KEY = 'gridschool_v1';
+const uid = () => Math.random().toString(36).slice(2,9);
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmt = n => new Intl.NumberFormat('ru-RU').format(Math.round(n||0)) + ' ₽';
+const monthKey = d => (d||'').slice(0,7);
+const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const DOW = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+/* ---------- seed ---------- */
+function seed(){
+  const students = [
+    { id:'s1', name:'Аня Петрова', grade:'9', parentId:'p1', cost:2000, mode:'subscription',
+      freq:'Пн, Ср 17:00', duration:60, balance:6, paidLessons:10, totalLessons:10,
+      note:'Слабое место — тригонометрия. Готовимся к ОГЭ.', text:'Аня, не забудь: в среду разбираем вариант №4. Возьми черновик.', parentName:'Ольга Петрова' },
+    { id:'s2', name:'Марк Ильин', grade:'11', parentId:'p2', cost:2500, mode:'perLesson',
+      freq:'Вт, Чт 19:00', duration:90, balance:0, paidLessons:0, totalLessons:0,
+      note:'Профильная математика, ЕГЭ. Сильный ученик.', text:'Марк, дома — задачи 13–15 из сборника.', parentName:'Сергей Ильин' },
+    { id:'s3', name:'Лена Соколова', grade:'7', parentId:'p3', cost:1800, mode:'subscription',
+      freq:'Сб 11:00', duration:60, balance:2, paidLessons:8, totalLessons:6,
+      note:'Нужно подтянуть дроби.', text:'Лена, повтори правила сложения дробей.', parentName:'Ирина Соколова' }
+  ];
+
+  const lessons = [
+    L('s1','2026-11-02','17:00',60,'done'),
+    L('s1','2026-11-04','17:00',60,'done'),
+    L('s1','2026-11-09','17:00',60,'planned'),
+    L('s1','2026-11-11','17:00',60,'moved'),
+    L('s1','2026-11-16','17:00',60,'planned'),
+    L('s2','2026-11-03','19:00',90,'done'),
+    L('s2','2026-11-05','19:00',90,'planned'),
+    L('s2','2026-11-10','19:00',90,'planned'),
+    L('s3','2026-11-07','11:00',60,'done'),
+    L('s3','2026-11-14','11:00',60,'planned'),
+    L('s3','2026-11-21','11:00',60,'planned')
+  ];
+
+  const payments = [
+    { id:uid(), studentId:'s1', date:'2026-11-01', amount:20000, method:'Перевод', comment:'Абонемент 10 занятий' },
+    { id:uid(), studentId:'s2', date:'2026-11-03', amount:2500, method:'Перевод', comment:'Поурочно' },
+    { id:uid(), studentId:'s3', date:'2026-10-28', amount:14400, method:'Наличные', comment:'Абонемент 8 занятий' }
+  ];
+
+  const materials = [
+    { id:uid(), studentId:'s1', title:'Конференция Zoom', url:'https://zoom.us/j/111', type:'conf' },
+    { id:uid(), studentId:'s1', title:'Онлайн-доска', url:'https://miro.com/board/abc', type:'board' },
+    { id:uid(), studentId:'s2', title:'Конференция Google Meet', url:'https://meet.google.com/xyz', type:'conf' },
+    { id:uid(), studentId:'s3', title:'Онлайн-доска Excalidraw', url:'https://excalidraw.com/#abc', type:'board' }
+  ];
+
+  const homework = [
+    { id:uid(), studentId:'s1', title:'Вариант ОГЭ №4', due:'2026-11-09', done:false, url:'' },
+    { id:uid(), studentId:'s1', title:'Тригонометрия: карточки', due:'2026-11-06', done:true, url:'' },
+    { id:uid(), studentId:'s2', title:'Задачи 13–15', due:'2026-11-08', done:false, url:'' },
+    { id:uid(), studentId:'s3', title:'Дроби: тренажёр', due:'2026-11-12', done:false, url:'' }
+  ];
+
+  const reschedules = [
+    { id:uid(), lessonId:'s1_2026-11-11', from:'2026-11-11 17:00', to:'2026-11-12 17:00', reason:'Болезнь' }
+  ];
+
+  const users = [
+    { id:'u1', email:'tutor@gridschool.ru', pass:'demo', role:'TUTOR', name:'Репетитор' },
+    { id:'p1', email:'parent@gridschool.ru', pass:'demo', role:'PARENT', name:'Ольга Петрова', studentId:'s1' },
+    { id:'st1', email:'student@gridschool.ru', pass:'demo', role:'STUDENT', name:'Аня Петрова', studentId:'s1' }
+  ];
+
+  return { users, students, lessons, payments, materials, homework, reschedules, session:null };
+
+  function L(studentId, date, time, duration, status){
+    return { id: studentId+'_'+date+'_'+time, studentId, date, time, duration, status };
+  }
+}
+
+/* ---------- store ---------- */
+function load(){
+  const raw = localStorage.getItem(DB_KEY);
+  if(!raw){ const s = seed(); localStorage.setItem(DB_KEY, JSON.stringify(s)); return s; }
+  try { return JSON.parse(raw); } catch(e){ const s = seed(); localStorage.setItem(DB_KEY, JSON.stringify(s)); return s; }
+}
+let DB = load();
+function save(){ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }
+function resetDB(){ localStorage.removeItem(DB_KEY); DB = load(); render(); toast('Демо-данные сброшены'); }
+
+/* ---------- helpers ---------- */
+const studentById = id => DB.students.find(s=>s.id===id);
+const lessonsOf = id => DB.lessons.filter(l=>l.studentId===id).sort((a,b)=> (a.date+a.time).localeCompare(b.date+b.time));
+const paymentsOf = id => DB.payments.filter(p=>p.studentId===id).sort((a,b)=>b.date.localeCompare(a.date));
+const materialsOf = id => DB.materials.filter(m=>m.studentId===id);
+const homeworkOf = id => DB.homework.filter(h=>h.studentId===id);
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+/* ---------- auth ---------- */
+function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('loginPass').value;
+  const u = DB.users.find(x=>x.email.toLowerCase()===email && x.pass===pass);
+  if(!u){ toast('Неверный email или пароль'); return; }
+  DB.session = u.id; save(); render();
+}
+function quick(email){
+  document.getElementById('loginEmail').value = email;
+  document.getElementById('loginPass').value = 'demo';
+  doLogin();
+}
+function logout(){ DB.session=null; save(); render(); }
+function currentUser(){ return DB.users.find(u=>u.id===DB.session) || null; }
+
+/* ---------- UI state ---------- */
+let TAB = null;
+const TABS = {
+  TUTOR: [
+    ['dash','Дашборд'],['schedule','Расписание'],['students','Ученики'],
+    ['money','Бухгалтерия'],['forecast','Прогноз']
+  ],
+  PARENT: [['home','Главная']],
+  STUDENT:[['home','Главная']]
+};
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  const u = currentUser();
+  document.getElementById('authView').classList.toggle('hidden', !!u);
+  document.getElementById('app').classList.toggle('hidden', !u);
+  if(!u) return;
+
+  document.getElementById('whoami').textContent =
+    (u.role==='TUTOR'?'Репетитор':u.role==='PARENT'?'Родитель':'Ученик') + ' · ' + u.name;
+
+  const tabs = TABS[u.role];
+  if(!TAB || !tabs.find(t=>t[0]===TAB)) TAB = tabs[0][0];
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = tabs.map(([id,label])=>
+    `<button class="${TAB===id?'active':''}" onclick="setTab('${id}')">${label}</button>`).join('');
+
+  const v = document.getElementById('views');
+  if(u.role==='TUTOR')       v.innerHTML = tutorView(u);
+  else if(u.role==='PARENT') v.innerHTML = parentView(u);
+  else                       v.innerHTML = studentView(u);
+  afterRender();
+}
+function setTab(t){ TAB=t; render(); }
+
+/* ============================================================
+   TUTOR
+   ============================================================ */
+function tutorView(u){
+  if(TAB==='dash')     return tutorDash();
+  if(TAB==='schedule') return tutorSchedule();
+  if(TAB==='students') return tutorStudents();
+  if(TAB==='money')    return tutorMoney();
+  if(TAB==='forecast') return tutorForecast();
+  return '';
+}
+
+/* --- Дашборд --- */
+function tutorDash(){
+  const today = todayISO();
+  const month = today.slice(0,7);
+  const doneMonth = DB.lessons.filter(l=>l.status==='done' && monthKey(l.date)===month);
+  const incomeMonth = DB.payments.filter(p=>monthKey(p.date)===month).reduce((s,p)=>s+p.amount,0);
+  const earnedMonth = doneMonth.reduce((s,l)=> s + (studentById(l.studentId)?.cost||0), 0);
+  const planned = DB.lessons.filter(l=>l.status==='planned' && l.date>=today);
+  const expected = planned.reduce((s,l)=> s + (studentById(l.studentId)?.cost||0), 0);
+  const lowBalance = DB.students.filter(s=>s.mode==='subscription' && s.balance<=2);
+  const todayLessons = DB.lessons.filter(l=>l.date===today).sort((a,b)=>a.time.localeCompare(b.time));
+
+  return `
+    <div class="grid g4">
+      ${kpi('Учеников', DB.students.length, DB.students.length+' активных')}
+      ${kpi('Занятий в этом месяце', doneMonth.length, 'проведено')}
+      ${kpi('Заработано (мес.)', fmt(earnedMonth), 'по проведённым')}
+      ${kpi('Ожидается', fmt(expected), planned.length+' занятий впереди')}
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card">
+        <div class="flex-bt"><h2>Сегодня, ${fmtDate(today)}</h2><span class="pill">${todayLessons.length} занятий</span></div>
+        ${todayLessons.length? todayLessons.map(l=>{
+          const s = studentById(l.studentId);
+          return `<div class="rowline">
+            <div><b>${l.time}</b> · ${s?.name||'—'}<div class="muted">${l.duration} мин · ${fmt(s?.cost||0)}</div></div>
+            <span class="pill ${l.status==='done'?'ok':l.status==='moved'?'warn':''}">${statusRu(l.status)}</span>
+          </div>`;
+        }).join('') : '<p class="muted">Сегодня занятий нет</p>'}
+      </div>
+
+      <div class="card">
+        <h2>Скоро закончится абонемент</h2>
+        ${lowBalance.length? lowBalance.map(s=>`
+          <div class="rowline">
+            <div><b>${s.name}</b><div class="muted">${s.freq}</div></div>
+            <span class="pill ${s.balance===0?'bad':'warn'}">осталось ${s.balance}</span>
+          </div>`).join('') : '<p class="muted">Все абонементы в порядке</p>'}
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="flex-bt"><h2>Оплаты за ${MONTHS[+month.slice(5,7)-1]}</h2><span class="kpi">${fmt(incomeMonth)}</span></div>
+      <p class="muted">Получено по реестру платежей за текущий месяц.</p>
+    </div>
+  `;
+}
+
+/* --- Расписание --- */
+let CAL_MONTH = todayISO().slice(0,7);
+function tutorSchedule(){
+  const [y,m] = CAL_MONTH.split('-').map(Number);
+  const first = new Date(y, m-1, 1);
+  const startDow = (first.getDay()+6)%7; // Пн=0
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const today = todayISO();
+
+  let cells = [];
+  for(let i=0;i<startDow;i++) cells.push(null);
+  for(let d=1; d<=daysInMonth; d++){
+    const iso = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const evs = DB.lessons.filter(l=>l.date===iso).sort((a,b)=>a.time.localeCompare(b.time));
+    cells.push({d, iso, evs});
+  }
+
+  const upcoming = DB.lessons.filter(l=>l.date>=today && l.status==='planned')
+    .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,8);
+
+  return `
+    <div class="card">
+      <div class="flex-bt" style="margin-bottom:14px">
+        <div class="row">
+          <button class="sm" onclick="calShift(-1)">←</button>
+          <b style="min-width:140px;text-align:center">${MONTHS[m-1]} ${y}</b>
+          <button class="sm" onclick="calShift(1)">→</button>
+          <button class="sm" onclick="CAL_MONTH='${todayISO().slice(0,7)}';render()">Сегодня</button>
+        </div>
+        <button class="primary sm" onclick="openLessonForm()">+ Занятие</button>
+      </div>
+      <div class="cal">
+        ${DOW.map(d=>`<div class="dow">${d}</div>`).join('')}
+        ${cells.map(c=>{
+          if(!c) return `<div class="cell" style="border:0;background:transparent"></div>`;
+          return `<div class="cell ${c.iso===today?'today':''}">
+            <div class="num">${c.d}</div>
+            ${c.evs.map(l=>{
+              const s = studentById(l.studentId);
+              return `<div class="ev ${l.status}" title="${l.time} ${s?.name||''} (${statusRu(l.status)})"
+                onclick="openLessonCard('${l.id}')">${l.time} ${shortName(s?.name||'')}</div>`;
+            }).join('')}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card">
+        <h2>Ближайшие занятия</h2>
+        ${upcoming.length? upcoming.map(l=>{
+          const s = studentById(l.studentId);
+          return `<div class="rowline">
+            <div><b>${fmtDate(l.date)}</b> ${l.time} · ${s?.name||'—'}<div class="muted">${l.duration} мин</div></div>
+            <div class="row">
+              <button class="sm" onclick="markDone('${l.id}')">Проведено</button>
+              <button class="sm" onclick="openMoveForm('${l.id}')">Перенести</button>
+            </div>
+          </div>`;
+        }).join('') : '<p class="muted">Нет запланированных занятий</p>'}
+      </div>
+      <div class="card">
+        <h2>История переносов</h2>
+        ${DB.reschedules.length? DB.reschedules.map(r=>{
+          const l = DB.lessons.find(x=>x.id===r.lessonId);
+          const s = l? studentById(l.studentId):null;
+          return `<div class="rowline"><div><b>${s?.name||'—'}</b>
+            <div class="muted">${r.from} → ${r.to}<br>${r.reason||''}</div></div>
+            <span class="pill warn">перенос</span></div>`;
+        }).join('') : '<p class="muted">Переносов не было</p>'}
+      </div>
+    </div>
+  `;
+}
+function calShift(d){
+  const [y,m] = CAL_MONTH.split('-').map(Number);
+  const nm = new Date(y, m-1+d, 1);
+  CAL_MONTH = `${nm.getFullYear()}-${String(nm.getMonth()+1).padStart(2,'0')}`;
+  render();
+}
+
+/* --- Ученики --- */
+function tutorStudents(){
+  return `
+    <div class="flex-bt" style="margin-bottom:14px">
+      <h1>Ученики</h1>
+      <button class="primary sm" onclick="openStudentForm()">+ Ученик</button>
+    </div>
+    <div class="grid g2">
+      ${DB.students.map(s=>{
+        const l = lessonsOf(s.id);
+        const done = l.filter(x=>x.status==='done').length;
+        const planned = l.filter(x=>x.status==='planned').length;
+        return `<div class="card">
+          <div class="flex-bt">
+            <div class="row">
+              <div class="avatar">${initials(s.name)}</div>
+              <div><b>${s.name}</b><div class="muted">${s.grade} класс · ${s.freq}</div></div>
+            </div>
+            <button class="sm" onclick="openStudentCard('${s.id}')">Карточка</button>
+          </div>
+          <div class="grid g3" style="margin-top:12px">
+            <div><h3>Стоимость</h3><b>${fmt(s.cost)}</b></div>
+            <div><h3>Формат</h3><b>${s.mode==='subscription'?'Абонемент':'Поурочно'}</b></div>
+            <div><h3>Остаток</h3>
+              ${s.mode==='subscription'
+                ? `<b class="${s.balance<=2?'':'ok'}" style="color:${s.balance<=2?'var(--bad)':'var(--ok)'}">${s.balance} зан.</b>`
+                : '<span class="muted">—</span>'}
+            </div>
+          </div>
+          <div style="margin-top:10px">
+            <div class="progress ${s.mode==='subscription' && s.balance<=2?'low':''}">
+              <i style="width:${s.mode==='subscription' ? Math.min(100, (s.balance/Math.max(1,s.paidLessons))*100) : 0}%"></i>
+            </div>
+            <div class="muted" style="margin-top:6px">Проведено: ${done} · Запланировано: ${planned}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function openStudentCard(id){
+  const s = studentById(id); if(!s) return;
+  const l = lessonsOf(id);
+  const pay = paymentsOf(id);
+  const hw = homeworkOf(id);
+  const mat = materialsOf(id);
+  const html = `
+    <div class="flex-bt"><h1>${s.name}</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
+    <p class="muted">${s.grade} класс · ${s.freq} · ${s.duration} мин · ${fmt(s.cost)} ${s.mode==='subscription'?'/ абонемент':'/ занятие'}</p>
+
+    <div class="grid g4" style="margin:14px 0">
+      ${kpi('Осталось', s.mode==='subscription'? s.balance+' зан.':'—', 'в абонементе')}
+      ${kpi('Проведено', l.filter(x=>x.status==='done').length, 'занятий')}
+      ${kpi('Оплачено', fmt(pay.reduce((a,p)=>a+p.amount,0)), 'всего')}
+      ${kpi('ДЗ', hw.filter(x=>!x.done).length, 'активных')}
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h2>Занятия</h2>
+        ${l.length? l.slice(-8).reverse().map(x=>`
+          <div class="rowline">
+            <div><b>${fmtDate(x.date)}</b> ${x.time} <span class="muted">${x.duration} мин</span></div>
+            <span class="pill ${x.status==='done'?'ok':x.status==='moved'?'warn':x.status==='cancel'?'bad':''}">${statusRu(x.status)}</span>
+          </div>`).join('') : '<p class="muted">Пока нет</p>'}
+      </div>
+      <div class="card">
+        <h2>Оплаты</h2>
+        ${pay.length? pay.map(p=>`
+          <div class="rowline">
+            <div><b>${fmtDate(p.date)}</b> · ${p.method}<div class="muted">${p.comment||''}</div></div>
+            <b>${fmt(p.amount)}</b>
+          </div>`).join('') : '<p class="muted">Пока нет</p>'}
+        <button class="sm" style="margin-top:10px" onclick="openPaymentForm('${id}')">+ Оплата</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Персональный текст для ученика</h2>
+      <textarea id="sText" rows="3">${escapeHtml(s.text||'')}</textarea>
+      <button class="primary sm" style="margin-top:8px" onclick="saveStudentText('${id}')">Сохранить</button>
+    </div>
+
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card">
+        <h2>Домашние задания</h2>
+        ${hw.map(h=>`
+          <div class="rowline">
+            <div><b>${escapeHtml(h.title)}</b><div class="muted">до ${fmtDate(h.due)}</div></div>
+            <span class="pill ${h.done?'ok':'warn'}">${h.done?'выполнено':'активно'}</span>
+          </div>`).join('') || '<p class="muted">Нет ДЗ</p>'}
+        <button class="sm" style="margin-top:8px" onclick="openHomeworkForm('${id}')">+ ДЗ</button>
+      </div>
+      <div class="card">
+        <h2>Ссылки (конференции, доски)</h2>
+        ${mat.map(m=>`
+          <div class="rowline">
+            <div><b>${escapeHtml(m.title)}</b><div class="muted">${m.type==='conf'?'конференция':'доска'}</div></div>
+            <a href="${m.url}" target="_blank" rel="noopener"><button class="sm">Открыть</button></a>
+          </div>`).join('') || '<p class="muted">Нет ссылок</p>'}
+        <button class="sm" style="margin-top:8px" onclick="openMaterialForm('${id}')">+ Ссылка</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Заметка репетитора (видна только вам)</h2>
+      <textarea id="sNote" rows="3">${escapeHtml(s.note||'')}</textarea>
+      <button class="primary sm" style="margin-top:8px" onclick="saveStudentNote('${id}')">Сохранить</button>
+    </div>
+  `;
+  showModal(html);
+}
+
+/* --- Бухгалтерия --- */
+function tutorMoney(){
+  const month = todayISO().slice(0,7);
+  const totalPaid = DB.payments.reduce((s,p)=>s+p.amount,0);
+  const monthPaid = DB.payments.filter(p=>monthKey(p.date)===month).reduce((s,p)=>s+p.amount,0);
+  const debt = DB.students.reduce((sum,s)=>{
+    if(s.mode==='perLesson'){
+      const done = DB.lessons.filter(l=>l.studentId===s.id && l.status==='done').length;
+      const paid = DB.payments.filter(p=>p.studentId===s.id).reduce((a,p)=>a+p.amount,0);
+      return sum + Math.max(0, done*s.cost - paid);
+    }
+    return sum;
+  },0);
+
+  return `
+    <div class="grid g4">
+      ${kpi('Оплачено всего', fmt(totalPaid), 'за всё время')}
+      ${kpi('За месяц', fmt(monthPaid), MONTHS[+month.slice(5,7)-1])}
+      ${kpi('Долги (поурочно)', fmt(debt), 'к доплате')}
+      ${kpi('Абонементов', DB.students.filter(s=>s.mode==='subscription').length, 'активных')}
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="flex-bt"><h2>Абонементы</h2></div>
+      <table>
+        <tr><th>Ученик</th><th>Оплачено зан.</th><th>Проведено</th><th>Остаток</th><th>Стоимость</th><th></th></tr>
+        ${DB.students.filter(s=>s.mode==='subscription').map(s=>{
+          const done = DB.lessons.filter(l=>l.studentId===s.id && l.status==='done').length;
+          return `<tr>
+            <td><b>${s.name}</b></td>
+            <td>${s.paidLessons}</td>
+            <td>${done}</td>
+            <td><span class="pill ${s.balance<=2?'bad':'ok'}">${s.balance}</span></td>
+            <td>${fmt(s.cost)}</td>
+            <td><button class="sm" onclick="addBalance('${s.id}')">+ зан.</button></td>
+          </tr>`;
+        }).join('')}
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="flex-bt"><h2>Реестр платежей</h2><button class="primary sm" onclick="openPaymentForm()">+ Платёж</button></div>
+      <table>
+        <tr><th>Дата</th><th>Ученик</th><th>Сумма</th><th>Способ</th><th>Комментарий</th></tr>
+        ${DB.payments.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(p=>{
+          const s = studentById(p.studentId);
+          return `<tr><td>${fmtDate(p.date)}</td><td>${s?.name||'—'}</td>
+            <td><b>${fmt(p.amount)}</b></td><td>${p.method}</td><td class="muted">${p.comment||''}</td></tr>`;
+        }).join('') || '<tr><td colspan="5" class="muted">Нет платежей</td></tr>'}
+      </table>
+    </div>
+  `;
+}
+function addBalance(id){
+  const s = studentById(id); if(!s) return;
+  s.balance += 1; s.paidLessons += 1; save();
+  toast('+1 занятие в абонемент'); openStudentCard(id);
+}
+
+/* --- Прогноз --- */
+function tutorForecast(){
+  const months = last6Months();
+  const rows = months.map(m=>{
+    const done = DB.lessons.filter(l=>l.status==='done' && monthKey(l.date)===m);
+    const planned = DB.lessons.filter(l=>l.status==='planned' && monthKey(l.date)===m);
+    const income = DB.payments.filter(p=>monthKey(p.date)===m).reduce((a,p)=>a+p.amount,0);
+    const students = new Set(DB.lessons.filter(l=>monthKey(l.date)===m).map(l=>l.studentId)).size;
+    const earned = done.reduce((a,l)=>a+(studentById(l.studentId)?.cost||0),0);
+    const expected = planned.reduce((a,l)=>a+(studentById(l.studentId)?.cost||0),0);
+    return { m, done:done.length, planned:planned.length, income, students, earned, expected };
+  });
+
+  // Простой bar для дохода
+  const max = Math.max(1, ...rows.map(r=>Math.max(r.income, r.expected+r.earned)));
+
+  return `
+    <div class="grid g3">
+      ${kpi('Учеников сейчас', DB.students.length, 'активных')}
+      ${kpi('Средний чек', fmt(avg(DB.students.map(s=>s.cost))), 'за занятие')}
+      ${kpi('Прогноз до конца месяца', fmt(expectedRemaining()), 'по расписанию')}
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Доход по месяцам</h2>
+      <div style="display:flex;align-items:end;gap:10px;height:180px;margin-top:12px">
+        ${rows.map(r=>{
+          const h1 = Math.round(r.income/max*100);
+          const h2 = Math.round((r.earned+r.expected)/max*100);
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+            <div style="display:flex;gap:4px;align-items:flex-end;height:140px">
+              <div title="Получено ${fmt(r.income)}" style="width:18px;background:var(--accent);border-radius:6px;height:${h1}%"></div>
+              <div title="Ожидается/прогноз ${fmt(r.earned+r.expected)}" style="width:18px;background:#c7d7ff;border-radius:6px;height:${h2}%"></div>
+            </div>
+            <div class="muted">${MONTHS[+r.m.slice(5,7)-1]}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="row muted" style="margin-top:10px">
+        <span><span class="pill" style="background:var(--accent);color:#fff"> </span> получено</span>
+        <span><span class="pill" style="background:#c7d7ff;color:#1e3a8a"> </span> прогноз/проведено</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Детализация</h2>
+      <table>
+        <tr><th>Месяц</th><th>Учеников</th><th>Проведено</th><th>Запланировано</th><th>Заработано</th><th>Оплачено</th><th>Прогноз</th></tr>
+        ${rows.map(r=>`<tr>
+          <td><b>${MONTHS[+r.m.slice(5,7)-1]} ${r.m.slice(0,4)}</b></td>
+          <td>${r.students}</td>
+          <td>${r.done}</td>
+          <td>${r.planned}</td>
+          <td>${fmt(r.earned)}</td>
+          <td>${fmt(r.income)}</td>
+          <td>${fmt(r.expected)}</td>
+        </tr>`).join('')}
+      </table>
+    </div>
+  `;
+}
+
+/* ============================================================
+   PARENT
+   ============================================================ */
+function parentView(u){
+  const s = studentById(u.studentId); if(!s) return '<div class="card">Ученик не привязан</div>';
+  return familyHome(s, false);
+}
+
+/* ============================================================
+   STUDENT
+   ============================================================ */
+function studentView(u){
+  const s = studentById(u.studentId); if(!s) return '<div class="card">Ученик не привязан</div>';
+  return familyHome(s, true);
+}
+
+function familyHome(s, isStudent){
+  const today = todayISO();
+  const up = lessonsOf(s.id).filter(l=>l.status==='planned' && l.date>=today);
+  const past = lessonsOf(s.id).filter(l=>l.status==='done').slice(-5).reverse();
+  const hw = homeworkOf(s.id);
+  const mat = materialsOf(s.id);
+  const pay = paymentsOf(s.id);
+
+  return `
+    <div class="grid g3">
+      ${kpi('Ученик', s.name, s.grade+' класс')}
+      ${kpi('Осталось занятий', s.mode==='subscription'? s.balance:'—', s.mode==='subscription'?'в абонементе':'поурочно')}
+      ${kpi('Ближайшее', up[0]? fmtDate(up[0].date)+' '+up[0].time : '—', up[0]? up[0].duration+' мин':'нет занятий')}
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card">
+        <h2>Расписание занятий</h2>
+        ${up.length? up.map(l=>`
+          <div class="rowline">
+            <div><b>${fmtDate(l.date)}</b> ${l.time}<div class="muted">${l.duration} мин</div></div>
+            <span class="pill">${statusRu(l.status)}</span>
+          </div>`).join('') : '<p class="muted">Пока нет запланированных занятий</p>'}
+      </div>
+
+      <div class="card">
+        <h2>Домашнее задание</h2>
+        ${hw.length? hw.map(h=>`
+          <div class="rowline">
+            <div><b>${escapeHtml(h.title)}</b><div class="muted">до ${fmtDate(h.due)}</div></div>
+            <span class="pill ${h.done?'ok':'warn'}">${h.done?'выполнено':'активно'}</span>
+          </div>`).join('') : '<p class="muted">Нет заданий</p>'}
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card">
+        <h2>Материалы и доски</h2>
+        ${mat.length? mat.map(m=>`
+          <div class="rowline">
+            <div><b>${escapeHtml(m.title)}</b><div class="muted">${m.type==='conf'?'конференция':'онлайн-доска'}</div></div>
+            <a href="${m.url}" target="_blank" rel="noopener"><button class="primary sm">Открыть</button></a>
+          </div>`).join('') : '<p class="muted">Ссылок пока нет</p>'}
+      </div>
+
+      <div class="card">
+        <h2>Сообщение от репетитора</h2>
+        <p>${s.text ? escapeHtml(s.text) : '<span class="muted">Пока пусто</span>'}</p>
+      </div>
+    </div>
+
+    ${!isStudent ? `
+    <div class="card" style="margin-top:16px">
+      <h2>История оплат</h2>
+      ${pay.length? pay.map(p=>`<div class="rowline"><div>${fmtDate(p.date)} · ${p.method}</div><b>${fmt(p.amount)}</b></div>`).join('') : '<p class="muted">Нет оплат</p>'}
+    </div>` : ''}
+
+    <div class="card" style="margin-top:16px">
+      <h2>Прошедшие занятия</h2>
+      ${past.length? past.map(l=>`<div class="rowline"><div>${fmtDate(l.date)} ${l.time}</div><span class="pill ok">проведено</span></div>`).join('') : '<p class="muted">Пока нет</p>'}
+    </div>
+  `;
+}
+
+/* ============================================================
+   MODALS / FORMS
+   ============================================================ */
+function showModal(html){
+  let m = document.getElementById('modal');
+  if(!m){ m = document.createElement('div'); m.id='modal'; document.body.appendChild(m); }
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(17,24,39,.45);display:grid;place-items:center;padding:20px;z-index:50';
+  m.innerHTML = `<div class="card" style="max-width:820px;width:100%;max-height:90vh;overflow:auto">${html}</div>`;
+  m.classList.remove('hidden');
+}
+function closeModal(){ const m=document.getElementById('modal'); if(m){ m.remove(); } }
+
+function openStudentForm(){
+  showModal(`
+    <div class="flex-bt"><h1>Новый ученик</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
+    <div class="field"><label>Имя и фамилия</label><input id="nfName"></div>
+    <div class="grid g2">
+      <div class="field"><label>Класс</label><input id="nfGrade" placeholder="9"></div>
+      <div class="field"><label>Стоимость занятия, ₽</label><input id="nfCost" type="number" value="2000"></div>
+    </div>
+    <div class="grid g2">
+      <div class="field"><label>Формат</label>
+        <select id="nfMode"><option value="perLesson">Поурочно</option><option value="subscription">Абонемент</option></select>
+      </div>
+      <div class="field"><label>Длительность, мин</label><input id="nfDur" type="number" value="60"></div>
+    </div>
+    <div class="field"><label>Расписание (текстом)</label><input id="nfFreq" placeholder="Пн, Ср 17:00"></div>
+    <div class="field"><label>Имя родителя</label><input id="nfParent"></div>
+    <button class="primary" onclick="saveNewStudent()">Создать</button>
+  `);
+}
+function saveNewStudent(){
+  const name = document.getElementById('nfName').value.trim();
+  if(!name){ toast('Введите имя'); return; }
+  DB.students.push({
+    id:'s'+uid(), name, grade:document.getElementById('nfGrade').value||'—',
+    parentId:null, cost:+document.getElementById('nfCost').value||2000,
+    mode:document.getElementById('nfMode').value,
+    freq:document.getElementById('nfFreq').value||'—',
+    duration:+document.getElementById('nfDur').value||60,
+    balance:0, paidLessons:0, totalLessons:0,
+    note:'', text:'', parentName:document.getElementById('nfParent').value||'—'
+  });
+  save(); closeModal(); render(); toast('Ученик добавлен');
+}
+
+function openLessonForm(){
+  showModal(`
+    <div class="flex-bt"><h1>Новое занятие</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
+    <div class="field"><label>Ученик</label>
+      <select id="lfS">${DB.students.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select>
+    </div>
+    <div class="grid g2">
+      <div class="field"><label>Дата</label><input id="lfD" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>Время</label><input id="lfT" type="time" value="17:00"></div>
+    </div>
+    <div class="field"><label>Длительность, мин</label><input id="lfDur" type="number" value="60"></div>
+    <button class="primary" onclick="saveNewLesson()">Добавить</button>
+  `);
+}
+function saveNewLesson(){
+  const sid = document.getElementById('lfS').value;
+  const date = document.getElementById('lfD').value;
+  const time = document.getElementById('lfT').value;
+  const dur = +document.getElementById('lfDur').value||60;
+  DB.lessons.push({ id:'l'+uid(), studentId:sid, date, time, duration:dur, status:'planned' });
+  save(); closeModal(); render(); toast('Занятие добавлено');
+}
+
+function openLessonCard(id){
+  const l = DB.lessons.find(x=>x.id===id); if(!l) return;
+  const s = studentById(l.studentId);
+  showModal(`
+    <div class="flex-bt"><h1>${s?.name||'—'}</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
+    <p class="muted">${fmtDate(l.date)} · ${l.time} · ${l.duration} мин · ${fmt(s?.cost||0)}</p>
+    <p>Статус: <span class="pill ${l.status==='done'?'ok':l.status==='moved'?'warn':l.status==='cancel'?'bad':''}">${statusRu(l.status)}</span></p>
+    <div class="row" style="margin-top:14px">
+      <button onclick="markDone('${l.id}')">Проведено</button>
+      <button onclick="openMoveForm('${l.id}')">Перенести</button>
+      <button class="bad" onclick="cancelLesson('${l.id}')">Отменить</button>
+    </div>
+  `);
+}
+
+function markDone(id){
+  const l = DB.lessons.find(x=>x.id===id); if(!l) return;
+  if(l.status==='done') return;
+  const s = studentById(l.studentId);
+  l.status = 'done';
+  if(s && s.mode==='subscription'){ s.balance = Math.max(0, s.balance-1); s.totalLessons += 1; }
+  save(); closeModal(); render(); toast('Отмечено как проведено');
+}
+function cancelLesson(id){
+  const l = DB.lessons.find(x=>x.id===id); if(!l) return;
+  l.status='cancel'; save(); closeModal(); render(); toast('Занятие отменено');
+}
+function openMoveForm(id){
+  const l = DB.lessons.find(x=>x.id===id); if(!l) return;
+  showModal(`
+    <div class="flex-bt"><h1>Перенос занятия</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
+    <p class="muted">Было: ${fmtDate(l.date)} ${l.time}</p>
+    <div class="grid g2">
+      <div class="field"><label>Новая дата</label><input id="mfD" type="date" value="${l.date}"></div>
+      <div class="field"><label>Новое время</label><input id="mfT" type="time" value="${l.time}"></div>
+    </div>
+    <div class="field"><label>Причина</label><input id="mfR" placeholder="Болезнь / просьба родителя"></div>
+    <button class="primary" onclick="saveMove('${id}')">Перенести</button>
+  `);
+}
+function saveMove(id){
+  const l = DB.lessons.find(x=>x.id===id); if(!l) return;
+  const nd = document.getElementById('mfD').value;
+  const nt = document.getElementById('mfT').value;
+  const r  = document.getElementById('mfR').value;
+  DB.reschedules.push({ id:uid(), lessonId:l.id, from:`${l.date} ${l.time}`, to:`${nd} ${nt}`, reason:r });
+  l.date = nd; l.time = nt; l.status = 'planned';
+  save(); closeModal(); render(); toast('Занятие перенесено (не списано)');
+}
+
+function openPaymentForm(sid){
+  showModal(`
+    <div class="flex-bt"><h1>Новый платёж</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
+    <div class="field"><label>Ученик</label>
+      <select id="pfS">${DB.students.map(s=>`<option value="${s.id}" ${s.id===sid?'selected':''}>${s.name}</option>`).join('')}</select>
+    </div>
+    <div class="grid g2">
+      <div class="field"><label>Дата</label><input id="pfD" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>Сумма, ₽</label><input id="pfA" type="number" value="2000"></div>
+    </div>
+    <div class="grid g2">
+      <div class="field"><label>Способ</label>
+        <select id="pfM"><option>Перевод</option><option>Наличные</option><option>Карта</option></select>
+      </div>
+      <div class="field"><label>Комментарий</label><input id="pfC" placeholder="Абонемент 10 зан."></div>
+    </div>
+    <button class="primary" onclick="savePayment()">Добавить</button>
+  `);
+}
+function savePayment(){
+  const studentId = document.getElementById('pfS').value;
+  const date = document.getElementById('pfD').value;
+  const amount = +document.getElementById('pfA').value||0;
+  const method = document.getElementById('pfM').value;
+  const comment = document.getElementById('pfC').value;
+  DB.payments.push({ id:uid(), studentId, date, amount, method, comment });
+  const s = studentById(studentId);
+  if(s && s.mode==='subscription' && amount>0){
+    const add = Math.floor(amount / s.cost);
+    s.balance += add; s.paidLessons += add;
+  }
+  save(); closeModal(); render(); toast('Платёж добавлен');
+}
+
+function saveStudentText(id){
+  const s = studentById(id); if(!s) return;
+  s.text = document.getElementById('sText').value;
+  save(); toast('Текст сохранён');
+}
+function saveStudentNote(id){
+  const s = studentById(id); if(!s) return;
+  s.note = document.getElementById('sNote').value;
+  save(); toast('Заметка сохранена');
+}
+
+function openHomeworkForm(sid){
+  showModal(`
+    <div class="flex-bt"><h1>Новое ДЗ</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
+    <div class="field"><label>Название</label><input id="hfT"></div>
+    <div class="field"><label>Дедлайн</label><input id="hfD" type="date" value="${todayISO()}"></div>
+    <div class="field"><label>Ссылка (необязательно)</label><input id="hfU" placeholder="https://"></div>
+    <button class="primary" onclick="saveHomework('${sid}')">Добавить</button>
+  `);
+}
+function saveHomework(sid){
+  const title = document.getElementById('hfT').value.trim();
+  if(!title){ toast('Введите название'); return; }
+  DB.homework.push({ id:uid(), studentId:sid, title, due:document.getElementById('hfD').value, done:false, url:document.getElementById('hfU').value });
+  save(); closeModal(); openStudentCard(sid); toast('ДЗ добавлено');
+}
+
+function openMaterialForm(sid){
+  showModal(`
+    <div class="flex-bt"><h1>Новая ссылка</h1><button class="sm" onclick="closeModal()">Закрыть</button></div>
+    <div class="field"><label>Название</label><input id="mfT" placeholder="Zoom / Miro"></div>
+    <div class="field"><label>URL</label><input id="mfU" placeholder="https://"></div>
+    <div class="field"><label>Тип</label>
+      <select id="mfType"><option value="conf">Конференция</option><option value="board">Онлайн-доска</option></select>
+    </div>
+    <button class="primary" onclick="saveMaterial('${sid}')">Добавить</button>
+  `);
+}
+function saveMaterial(sid){
+  const title = document.getElementById('mfT').value.trim();
+  const url = document.getElementById('mfU').value.trim();
+  if(!title||!url){ toast('Заполните поля'); return; }
+  DB.materials.push({ id:uid(), studentId:sid, title, url, type:document.getElementById('mfType').value });
+  save(); closeModal(); openStudentCard(sid); toast('Ссылка добавлена');
+}
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+function kpi(label, value, sub){
+  return `<div class="card"><h3>${label}</h3><div class="kpi">${value}</div><div class="muted">${sub||''}</div></div>`;
+}
+function statusRu(s){
+  return ({planned:'запланировано', done:'проведено', moved:'перенесено', cancel:'отменено'})[s] || s;
+}
+function initials(n){ return n.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase(); }
+function shortName(n){ return n.split(' ')[0]; }
+function fmtDate(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function avg(a){ return a.length? a.reduce((x,y)=>x+y,0)/a.length : 0; }
+function last6Months(){
+  const res=[]; const now = new Date();
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    res.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  return res;
+}
+function expectedRemaining(){
+  const today = todayISO();
+  const m = today.slice(0,7);
+  return DB.lessons.filter(l=>l.status==='planned' && monthKey(l.date)===m && l.date>=today)
+    .reduce((a,l)=>a+(studentById(l.studentId)?.cost||0),0);
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+function afterRender(){ /* место для доп. инициализации */ }
+
+// reset hotkey
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closeModal();
+});
+
+// reset кнопка (скрытая — можно вызвать из консоли: resetDB())
+window.resetDB = resetDB;
+
+render();
+</script>
+</body>
+</html>
